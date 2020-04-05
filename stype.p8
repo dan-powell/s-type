@@ -10,21 +10,17 @@ __lua__
 -- basic de-buggery
 debug = {}
 frame = 0
+tick = 0
 version = "0.0.1 alpha"
 lvlselect = {0,0,1,1,0,1}
+
+controller_current = {}
+controllers = {}
 
 -- tile grid
 grid = {}
 grid.w = 8
 grid.h = 8
-
--- actor tables
-pickups = {}
-shots = {}
-enemies = {}
-explosions = {}
-thrusttrails = {}
-enemy_queue = {}
 
 -- core physics values
 physics = {}
@@ -204,550 +200,19 @@ levels = {
 level = levels[1]
 
 
-
 -- ====================================
--- title
--- ====================================
-
-function init_title()
-    state = 0
-    -- 0 start screen
-    -- 1 game
-    -- 2 score screen
-    -- music(01)
-    lvlselect_input = {-1,-1,-1,-1,-1,-1}
-    
-    starfield = {}
-    -- prepopulate starfield
-    for i=1,60 do
-        create_star(rnd(128))
-    end
-
-    s = {
-        s = 128,
-        x = -32,
-        y = 16,
-        w = 2,
-        h = 4,
-        xd = 24
-    }
-
-    logotype = {
-        s = 130,
-        x = 160,
-        y = 16,
-        w = 8,
-        h = 4,
-        xd = 40
-    }
-
-end
-
-function update_title()
-    if btnp(0) then
-        del(lvlselect_input, lvlselect_input[1])
-        add(lvlselect_input, 0)
-    end
-    if btnp(1) then
-        del(lvlselect_input, lvlselect_input[1])
-        add(lvlselect_input, 1)
-    end
-    local test = true
-    for k, v in pairs(lvlselect_input) do
-        if v != lvlselect[k] then
-            test = false
-        end
-    end
-    if test then
-        init_lvlselect()
-    end
-    if btnp(5) then
-        init_game()
-    end
-    create_star(0)
-    if s.x < s.xd then 
-        s.x = ceil(s.x + 1)
-    end
-    if logotype.x > logotype.xd then 
-        logotype.x = ceil(logotype.x - 2)
-    end
-end
-
-function create_star(y)
-    local s = {}
-    s.x = rnd(128)
-    s.y = y
-    s.c = 7
-    s.vy = rnd(1) * 3
-    col = {1,5,6,13} -- colour pool
-    s.c = col[ceil(rnd(count(col)))] -- pick a colour
-    add(starfield, s)
-end
-
-function draw_starfield(s)
-    s.y += s.vy
-    pset(s.x, s.y, s.c)
-    if s.y > 128 then
-        del(starfield, s)
-    end
-end
-
-function draw_title()
-    cls(0)
-    foreach(starfield, draw_starfield)
-
-    spr(s.s, s.x, s.y, s.w, s.h)
-    spr(logotype.s, logotype.x, logotype.y, logotype.w, logotype.h)
-
-    if(not flash) flash=0
-    if(frame%(30/2)==0) then
-        flash += 1
-    end
-
-    if logotype.x == logotype.xd + 2 then 
-        cls(7)
-    end
-
-    if flash%2 == 1 then
-        print("press ❎ to start", 30, 64, 9)
-    end
-
-    print(version, 3, 120, 2)
-end
-
--- ====================================
--- game
+-- includes
 -- ====================================
 
-function init_game()
-    start()
-    state = 1
-    status = 1
+#include stype_start.p8
+#include stype_game.p8
 
-end
+-- ====================================
+-- Global Helpers
+-- ====================================
 
--- --------------------------
--- game logic
--- --------------------------
 
-function update_game()
-
-    if status == 0 then
-        -- start of level
-        if btnp(5) then
-            status = 1
-        end
-    end
-
-    if status == 1 then
-        -- level in progress
-
-        move_actors()
-        move_ship()
-        update_ship()
-        update_shots()
-        update_enemies()
-        foreach(explosions, update_explosion)
-        foreach(thrusttrails, update_thrusttrail)
-        update_camera()
-        check_win()
-        if status == 1 then
-            check_lost()
-        end
-    end
-
-    if status == 2 then
-        -- level complete
-        if btnp(5) then
-            next()
-        end
-    end
-
-    if status == 3 then
-        -- level lost
-        if btnp(5) then
-            finish()
-        end
-    end
-
-    if status == 4 then
-        -- game won
-        if btnp(5) then
-            finish()
-        end
-    end
-
-end
-
--- start the game
-function start()
-    player = {}
-    player.lives = 6
-    player.score = 10
-    player.lvl = 0
-    ship = new_ship()
-end
-
--- reset the game
-function reset()
-    status = 0
-    pickups = {}
-    shots = {}
-    enemies = {}
-    enemy_queue = {}
-    --cam.x -= 256
-    if cam.x < 0 then
-        cam.x = 0
-    end
-    ship = new_ship()
-end
-
-function next()
-    if level.next == 0 then
-        init_scores()
-    else
-        level = levels[level.next]
-    end
-    player.lvl += 1
-    reset()
-end
-
-function finish()
-    init_scores()
-end
-
-function new_ship()
-    local s = {}
-    for k, v in pairs(config.ship) do
-        s[k] = v
-    end
-    return s
-end
-
-function add_shot(x, y)
-    local s = {}
-    s.vx = config.shot.vx
-    s.x = x
-    s.y = y
-    add(shots, s)
-end
-
-function add_explosion(x, y, t)
-    -- Set default parameters
-    local e = {
-        w = 8, -- width
-        h = 8, -- height
-        x = x,
-        y = y,
-        cs = 1
-    }
-    -- Set the sprites
-    if(t == 2) then
-        e.as = {22,23,24,25} -- sprites
-    else
-        e.as = {16,17,18,19,20} -- sprites
-    end
-    add(explosions, e)
-end
-
-function add_thrusttrail(x, y)
-    -- Set default parameters
-    local t = {
-        x = x,
-        y = y,
-        c = 1, -- current cycle
-        lc = 15 -- lifecycles (lasts for x frames)
-    }
-    t.cl = {7,10,9,8,1} -- colour list to cycle through
-    -- Set the sprites
-    add(thrusttrails, t)
-end
-
--- update explosions
-function update_explosion(e)
-
-end
-
--- update explosions
-function update_thrusttrail(t)
-
-end
-
-function new_enemy(t, rt)
-    local e = {}
-    for k, v in pairs(t) do
-        e[k] = v
-    end
-
-    e.rt = rt -- Release timer
-    e.lt = t.lt -- Lifetime (total)
-    e.ltr = t.lt -- Lifetime remaining
-    e.st = 0 -- Sprite timer
-
-    e.sx = t.psx + t.tx
-    e.sy = t.psy + 0
-    e.ex = t.pex + t.tx
-    e.ey = t.pey + 0
-
-    e.p1x = t.p1x + t.tx
-    e.p1y = t.p1y + 0
-    e.p2x = t.p2x + t.tx
-    e.p2y = t.p2y + 0
-
-    return e
-end
-
-function trigger_enemies()
-    for k,es in pairs(level.e) do
-        if ((cam.x + cam.w) == es.tx) then
-            for i=1,es.n do
-                add(enemy_queue, new_enemy(es, i*10))
-            end
-            -- level.e[k] = nil
-        end
-    end
-end
-
-function process_enemy_queue()
-    for k,enemy in pairs(enemy_queue) do
-        if(enemy.rt <= 0) then
-            enemy.o = frame
-            add(enemies, enemy)
-            del(enemy_queue, enemy)
-        end
-        enemy.rt -= 1
-    end
-end
-
--- update enemies
-function update_enemies()
-
-    trigger_enemies()
-
-    process_enemy_queue()
-
-    for k1,e in pairs(enemies) do
-        -- Check if enemy has collided with shot
-        for k2,s in pairs(shots) do
-            if (s.x > e.x and s.x < (e.x + e.w) and s.y > e.y and s.y < (e.y + e.h)) then
-                player.score += e.pv
-                add_explosion(e.x, e.y, 1)
-                del(enemies, e)
-                del(shots, s)
-            end
-        end
-        -- Check if enemy has collided with ship
-        if collision(ship, e) then
-            player.score -= e.pv
-            add_explosion(ship.x, ship.y, 2)
-            del(enemies, e)
-            ship.s = 0
-            reset()
-        end
-    end
-
-end
-
-
-
--- update enemies
-function update_ship()
-
-    -- Check if ship has collided with brick
-    if  collision_tile(ship.x, ship.y) or
-        collision_tile(ship.x + ship.w, ship.y) or
-        collision_tile(ship.x, ship.y + ship.h) or
-        collision_tile(ship.x + ship.w, ship.y + ship.h) then
-        player.score -= 99
-        add_explosion(ship.x, ship.y, 2)
-        ship.s = 0
-        reset()
-    end
-
-end
-
-
--- Update the enemy position
-function move_enemy(e)
-    -- Base updated position on a bezier curve (quad)
-    e.x = bezier_quad(e.lt,e.o,e.sx,e.ex,e.p1x,e.p2x)
-    e.y = bezier_quad(e.lt,e.o,e.sy,e.ey,e.p1y,e.p2y)
-    -- Check for end of life and remove
-    if (e.ltr <= 1) then
-        del(enemies, e)
-    else
-        e.ltr -= 1
-    end
-end
-
--- update the camera position
-function update_camera()
-
-    local y = ship.y - (cam.y+cam.h/2) -- x offset of ship from center of cam
-
-    -- center the camera on the ship, but only if it approaches edges of screen
-    if y > 30 or y < -30 then
-        cam.y += ceil(y/12)
-    end
-
-    -- limit the camera to stop it revealing outside of map
-    if cam.x < 0 then
-        cam.vx = 0
-    elseif cam.x > level.w - cam.w then
-        cam.vx = 0
-    end
-
-    -- move the camera +x automatically
-    cam.x += cam.vx
-
-    if cam.y < 0 then
-        cam.y = 0
-    elseif cam.y > level.h - cam.h then
-        cam.y = level.h - cam.h
-    end
-
-end
-
--- update shots
-function update_shots()
-    if(not debounce) debounce=0
-    debounce += 1
-    if btn(5) and debounce > 10 then
-       add_shot(ship.x + 3, ship.y)
-       add_shot(ship.x + 3, ship.y + ship.h - 1)
-       debounce = 0
-    end
-end
-
--- update ship position
-function move_ship()
-
-    -- create a force acting on the ship
-    local f = 0
-    if btn(0) then ship.vx -= ship.f end
-    if btn(1) then ship.vx += ship.f end
-    if btn(2) then ship.vy -= ship.f end
-    if btn(3) then ship.vy += ship.f end
-
-    -- apply friction
-    ship.vx *= ship.fx
-    ship.vy *= ship.fy
-
-    -- set the direction
-    if ship.vx > 1 or ship.vx < -1 then
-        ship.dx = ship.vx
-    end
-
-    if ship.vy > 1 or ship.vy < -1 then
-        ship.dy = ship.vy
-    end
-
-    -- set new position of ship
-    ship.x += ship.vx
-    ship.y += ship.vy
-
-    -- move with cam
-    ship.x += cam.vx
-
-    -- ship can't leave level edges
-    local offset = 0
-    if status == 0 then
-        offset = 8
-    end
-
-    if ship.x < offset then
-        ship.x = offset
-        ship.vx = 0
-    end
-    if ship.x > level.w - ship.w - offset then
-        ship.x = level.w - ship.w - offset
-        ship.vx = 0
-    end
-
-    if ship.y < offset then
-        ship.y = offset
-        ship.vy = 0
-    end
-    if ship.y > level.h - ship.h - offset then
-        ship.y = level.h - ship.h - offset
-        ship.vy = 0
-    end
-
-    -- ship can't leave camera edges
-    local offset = 0
-    if status == 0 then
-        offset = 8
-    end
-
-    if ship.x < cam.x then
-        ship.x = cam.x
-        ship.vx = 0
-    end
-    if ship.x > cam.x + cam.w - ship.w then
-        ship.x = cam.x + cam.w - ship.w
-        ship.vx = 0
-    end
-
-    -- Add thrust trails
-    add_thrusttrail(ship.x, ship.y + 1)
-    add_thrusttrail(ship.x, ship.y + ship.h - 2)
-
-end
-
-
-
--- Update the shot position
-function move_shot(s)
-    s.x += s.vx
-
-    -- If the shot hits a physical tile
-    if collision_tile(s.x, s.y) then
-        del(shots, s)
-    end
-
-    -- If the shot leaves camera, remove it from memory
-    if s.x > cam.x + cam.w then
-        del(shots, s)
-    end
-
-end
-
-
-
--- update all actors
-function move_actors()
-    foreach(shots, move_shot)
-    foreach(enemies, move_enemy)
-end
-
-
-
-
--- check if level win critera achieved
-function check_win()
-    --if level.b <= 0 then
-    --    if level.next == 0 then
-    --        status = 4
-    --    else
-    --        status = 2
-    --    end
-    --end
-end
-
--- check if lost life criteria achieved
-function check_lost()
-    -- if count(balls) <= 0 then
-    --     -- todo lose a life
-    --     player.lives -= 1
-    --     reset()
-    --     if player.lives <= 0 then
-    --         status = 3
-    --     end
-    -- end
-end
-
-
--- Helper Functions
+-- -- Helper Functions
 
 -- Get the length of a table
 function tablelength(t)
@@ -832,94 +297,69 @@ function bezier_quad(l,o,s,e,p1,p2)
     return (1-t)*(1-t)*(1-t)*s + 3*(1-t)*(1-t)*t*p1 + 3*(1-t)*t*t*p2 + t*t*t*e
 end
 
--- --------------------------
--- game drawing
--- --------------------------
+-- -- --------------------------
+-- -- game drawing
+-- -- --------------------------
 
-function draw_game()
-    camera(cam.x, cam.y)
-    cls(0)
-    map(level.mx,level.my,0,0,level.tw,level.th)
-    print(stat(0), cam.x, cam.y + cam.h - 16, 7) -- debug memory
-    print(stat(1), cam.x, cam.y + cam.h - 8, 7) -- debug cpu
-    draw_actors()
-    draw_ui()
-    if status == 0 then
-        print('❎ to launch', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
-    end
-    if status == 2 then
-        print('level complete', cam.x + flr(cam.w/2) - 26, cam.y + flr(cam.h/2) + 20, 12)
-        print('❎ for next level', cam.x + flr(cam.w/2) - 32, cam.y + flr(cam.h/2) + 30, 9)
-    end
-    if status == 3 then
-        print('you lost :(', cam.x + flr(cam.w/2) - 20, cam.y + flr(cam.h/2) + 20, 8)
-        print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
-    end
-    if status == 4 then
-        print('you win!', cam.x + flr(cam.w/2) - 16, cam.y + flr(cam.h/2) + 20, 3)
-        print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
-    end
-end
+-- function draw_actors()
+--     foreach(shots, draw_shot)
+--     foreach(enemies, draw_enemy)
+--     foreach(explosions, draw_explosion)
+--     foreach(thrusttrails, draw_thrusttrail)
+--     draw_ship()
+-- end
 
-function draw_actors()
-    foreach(shots, draw_shot)
-    foreach(enemies, draw_enemy)
-    foreach(explosions, draw_explosion)
-    foreach(thrusttrails, draw_thrusttrail)
-    draw_ship()
-end
+-- function draw_ship()
+--     spr(ship.sp[frame%(count(ship.sp))+1], ship.x, ship.y)
+-- end
 
-function draw_ship()
-    spr(ship.sp[frame%(count(ship.sp))+1], ship.x, ship.y)
-end
+-- function draw_shot(s)
+--     pset(s.x, s.y, 7)
+-- end
 
-function draw_shot(s)
-    pset(s.x, s.y, 7)
-end
+-- function draw_enemy(e)
+--     if(frame%(4)==0) then
+--         e.st += 1
+--         if(e.st > tablelength(e.s)) then
+--             e.st = 1
+--         end
+--     end
+--     spr(e.s[e.st], e.x, e.y, e.sw, e.sh)
+-- end
 
-function draw_enemy(e)
-    if(frame%(4)==0) then
-        e.st += 1
-        if(e.st > tablelength(e.s)) then
-            e.st = 1
-        end
-    end
-    spr(e.s[e.st], e.x, e.y, e.sw, e.sh)
-end
+-- function draw_explosion(e)
+--     if(e.cs >= count(e.as)) then
+--         del(explosions, e)
+--     else
+--        if(frame%(4)==0) then
+--            e.cs += 1;
+--        end
+--     end
+--     spr(e.as[e.cs], e.x, e.y)
+-- end
 
-function draw_explosion(e)
-    if(e.cs >= count(e.as)) then
-        del(explosions, e)
-    else
-       if(frame%(4)==0) then
-           e.cs += 1;
-       end
-    end
-    spr(e.as[e.cs], e.x, e.y)
-end
+-- function draw_thrusttrail(t)
+--     if(t.c >= t.lc) then
+--         del(thrusttrails, t)
+--     else
+--         t.c += 1;
+--     end
+--     pset(t.x, t.y, t.cl[ceil(count(t.cl)/(t.lc/t.c))])
+-- end
 
-function draw_thrusttrail(t)
-    if(t.c >= t.lc) then
-        del(thrusttrails, t)
-    else
-        t.c += 1;
-    end
-    pset(t.x, t.y, t.cl[ceil(count(t.cl)/(t.lc/t.c))])
-end
+-- function draw_ui()
+--     -- draw lives
+--     for i = 1, min(player.lives,6) do
+--         spr(5, cam.x + cam.w - 9 - (i*8), cam.y + 9)
+--     end
 
-function draw_ui()
-    -- draw lives
-    for i = 1, min(player.lives,6) do
-        spr(5, cam.x + cam.w - 9 - (i*8), cam.y + 9)
-    end
+--     -- if player.lives - 6 > 0 then
+--       --  print('+' .. player.lives - 6, cam.x + cam.w - 68, cam.y + 9, 8)
+--     -- end
 
-    -- if player.lives - 6 > 0 then
-      --  print('+' .. player.lives - 6, cam.x + cam.w - 68, cam.y + 9, 8)
-    -- end
-
-    -- draw score
-    print(player.score, cam.x + 9, cam.y + 9, 9)
-end
+--     -- draw score
+--     print(player.score, cam.x + 9, cam.y + 9, 9)
+-- end
 
 -- ====================================
 -- lose
@@ -988,35 +428,65 @@ end
 -- state management
 -- ====================================
 
-function _init()
-    printh('game start')
-    init_title() -- does title things.
-end
-
 function _update()
-    frame += 1
-    if (state == 0) then --title screen state
-        update_title()
-    elseif (state == 1) then
-        update_game()
-    elseif (state == 2) then
-        update_scores()
-    elseif (state == 3) then
-        update_lvlselect()
-    end
+    tick += 1
+    if (controller_current.update) then controller_current.update() end
 end
 
 function _draw()
-    if (state == 0) then
-        draw_title()
-    elseif (state == 1) then
-        draw_game()
-    elseif (state == 2) then
-        draw_scores()
-    elseif (state == 3) then
-        draw_lvlselect()
+    frame += 1
+    if (controller_current.draw) then controller_current.draw() end
+end
+
+function switchController( newController )
+    printh('switching to ' .. newController)
+    found = controllers[newController]
+    if (found == nil) then 
+        printh('controller not found')
+        return 
+    end
+    if (found) then newController = found end
+    if (controller_current.blur) then 
+        printh('controller blur')
+        controller_current.blur() 
+    end
+    controller_current = newController
+    if (controller_current.focus) then 
+        printh('controller focus')
+        controller_current.focus() 
     end
 end
+
+function _init()
+    printh('_init')
+    switchController("controller_title")
+end
+
+
+-- function _update()
+--     if (state == 0) then --title screen state
+--         update_title()
+--     elseif (state == 1) then
+--         update_game()
+--     elseif (state == 2) then
+--         update_scores()
+--     elseif (state == 3) then
+--         update_lvlselect()
+--     end
+-- end
+
+-- function _draw()
+--     if (state == 0) then
+--         draw_title()
+--     elseif (state == 1) then
+--         draw_game()
+--     elseif (state == 2) then
+--         draw_scores()
+--     elseif (state == 3) then
+--         draw_lvlselect()
+--     end
+-- end
+
 __gfx__
 0000000066c0000066c0000066c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000009666000096660000a66600000000000000000000000000000000000000000000000000000000000000000000000000000080800000e0e00000808000
