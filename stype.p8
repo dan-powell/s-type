@@ -4,8 +4,9 @@ __lua__
 
 -- s-Type - an game by Matt and Dan
 
--- todo
--- everything
+-- ====================================
+-- Globa Variables
+-- ====================================
 
 -- basic de-buggery
 debug = {}
@@ -31,26 +32,47 @@ physics.vxmax = 2 -- max x velocity
 physics.vymax = 5 -- max y velocity
 physics.vymax_pos = 10 -- max y velocity
 
-
 -- config defaults
 config = {
     ship = {
-        s = 1,
-        t = 1, -- type 1 = main, 2 = space
-        w = 8, -- width
-        h = 8, -- height
-        x = 64, -- absolute x position
-        y = 64, -- absolute y position
-        vx = 0, -- x velocity (pixels moved per frame)
-        vy = 0, -- y velocity (pixels moved per frame)
-        fx = 0.7, -- horizontal friction
-        fy = 0.7, -- vertical friction
-        f = 2, -- force applied when moved
-        sw = 1, -- sprite width (in tiles)
-        sh = 1, -- sprite height (in tiles)
-        dx = -1, -- direction (+1 right -1 left)
-        dy = -1, -- direction (+1 down -1 up)
-        sp = {1,2,3} -- sprites
+            s = 1,
+            t = 1, -- type 1 = main, 2 = space
+            w = 8, -- width
+            h = 8, -- height
+            x = 64, -- absolute x position
+            y = 64, -- absolute y position
+            vx = 0, -- x velocity (pixels moved per frame)
+            vy = 0, -- y velocity (pixels moved per frame)
+            sw = 1, -- sprite width (in tiles)
+            sh = 1, -- sprite height (in tiles)
+            dx = -1, -- direction (+1 right -1 left)
+            dy = -1, -- direction (+1 down -1 up)
+    },
+    ships = {
+        {
+            n = "rwe",
+            d = "all rounder",
+            fx = 0.7, -- horizontal friction
+            fy = 0.7, -- vertical friction
+            f = 2, -- force applied when moved
+            sp = {1,2,3} -- sprites
+        },
+        {
+            n = "fdsfds",
+            d = "solid, but slow",
+            fx = 0.5, -- horizontal friction
+            fy = 0.5, -- vertical friction
+            f = 1.5, -- force applied when moved
+            sp = {4,5,6} -- sprites
+        },
+        {
+            n = "rwrewrew",
+            d = "speedy, but delicate",
+            fx = 0.7, -- horizontal friction
+            fy = 0.7, -- vertical friction
+            f = 2.5, -- force applied when moved
+            sp = {7,8,9} -- sprites
+        }
     },
     shot = {
         vx = 10, -- x velocity (pixels moved per frame)
@@ -74,7 +96,6 @@ config = {
         sh = 1, -- sprite height (in tiles)
     }
 }
-
 
 -- camera attributes
 cam = {
@@ -199,20 +220,20 @@ levels = {
 }
 level = levels[1]
 
-
 -- ====================================
 -- includes
 -- ====================================
 
-#include stype_start.p8
+#include stype_title.p8
+#include stype_help.p8
+#include stype_shipselect.p8
 #include stype_game.p8
+#include stype_end.p8
+#include stype_levelselect.p8
 
 -- ====================================
 -- Global Helpers
 -- ====================================
-
-
--- -- Helper Functions
 
 -- Get the length of a table
 function tablelength(t)
@@ -297,148 +318,21 @@ function bezier_quad(l,o,s,e,p1,p2)
     return (1-t)*(1-t)*(1-t)*s + 3*(1-t)*(1-t)*t*p1 + 3*(1-t)*t*t*p2 + t*t*t*e
 end
 
--- -- --------------------------
--- -- game drawing
--- -- --------------------------
-
--- function draw_actors()
---     foreach(shots, draw_shot)
---     foreach(enemies, draw_enemy)
---     foreach(explosions, draw_explosion)
---     foreach(thrusttrails, draw_thrusttrail)
---     draw_ship()
--- end
-
--- function draw_ship()
---     spr(ship.sp[frame%(count(ship.sp))+1], ship.x, ship.y)
--- end
-
--- function draw_shot(s)
---     pset(s.x, s.y, 7)
--- end
-
--- function draw_enemy(e)
---     if(frame%(4)==0) then
---         e.st += 1
---         if(e.st > tablelength(e.s)) then
---             e.st = 1
---         end
---     end
---     spr(e.s[e.st], e.x, e.y, e.sw, e.sh)
--- end
-
--- function draw_explosion(e)
---     if(e.cs >= count(e.as)) then
---         del(explosions, e)
---     else
---        if(frame%(4)==0) then
---            e.cs += 1;
---        end
---     end
---     spr(e.as[e.cs], e.x, e.y)
--- end
-
--- function draw_thrusttrail(t)
---     if(t.c >= t.lc) then
---         del(thrusttrails, t)
---     else
---         t.c += 1;
---     end
---     pset(t.x, t.y, t.cl[ceil(count(t.cl)/(t.lc/t.c))])
--- end
-
--- function draw_ui()
---     -- draw lives
---     for i = 1, min(player.lives,6) do
---         spr(5, cam.x + cam.w - 9 - (i*8), cam.y + 9)
---     end
-
---     -- if player.lives - 6 > 0 then
---       --  print('+' .. player.lives - 6, cam.x + cam.w - 68, cam.y + 9, 8)
---     -- end
-
---     -- draw score
---     print(player.score, cam.x + 9, cam.y + 9, 9)
--- end
-
--- ====================================
--- lose
--- ====================================
-
-function init_scores()
-    state = 2
-end
-
-function update_scores()
-    if btnp(5) then
-        run()
-    end
-end
-
-function draw_scores()
-    if player.lives > 0 then
-        cls(3)
-        print("good jorb", 48, 24, 11)
-    else
-        cls(2)
-        print("try again next time", 24, 24, 11)
-    end
-    camera(0,0)
-    spr(76, 96, 96, 4, 4) -- bork
-
-    print("score: " .. player.score, 48, 32, 7)
-    print("levels: " .. player.lvl, 48, 48, 7)
-    print("bricks: " .. player.bricks, 48, 56, 7)
-    print("bounces: " .. player.bounces, 48, 64, 7)
-    print("lives left: " .. player.lives, 48, 72, 7)
-    print("❎ to try again", 24, 96, 9)
-end
-
--- ====================================
--- lose
--- ====================================
-
-function init_lvlselect()
-    state = 3
-    select = 1
-end
-
-function update_lvlselect()
-    if btnp(0) and select > 1 then
-        select -= 1
-    end
-
-    if btnp(1) and select < count(levels) then
-        select += 1
-    end
-
-    if btnp(5) then
-        level = levels[select]
-        init_game()
-    end
-end
-
-function draw_lvlselect()
-    cls(0)
-    print("level select", 48, 32, 7)
-    print(select, 48, 48, 7)
-end
-
 -- ====================================
 -- state management
 -- ====================================
 
 function _update()
     tick += 1
-    if (controller_current.update) then controller_current.update() end
+    if (controller_current._update) then controller_current._update() end
 end
 
 function _draw()
     frame += 1
-    if (controller_current.draw) then controller_current.draw() end
+    if (controller_current._draw) then controller_current._draw() end
 end
 
-function switchController( newController )
+function switchController(newController, data)
     printh('switching to ' .. newController)
     found = controllers[newController]
     if (found == nil) then 
@@ -446,56 +340,36 @@ function switchController( newController )
         return 
     end
     if (found) then newController = found end
-    if (controller_current.blur) then 
+    if (controller_current._blur) then 
         printh('controller blur')
-        controller_current.blur() 
+        controller_current._blur()
     end
     controller_current = newController
-    if (controller_current.focus) then 
+    if (controller_current._init and controller_current.init == nil) then 
+        printh('controller init')
+        controller_current.init = true
+        controller_current._init(data)
+    end
+    if (controller_current._focus) then 
         printh('controller focus')
-        controller_current.focus() 
+        controller_current._focus(data)
     end
 end
 
 function _init()
     printh('_init')
-    switchController("controller_title")
+    switchController("title")
 end
 
-
--- function _update()
---     if (state == 0) then --title screen state
---         update_title()
---     elseif (state == 1) then
---         update_game()
---     elseif (state == 2) then
---         update_scores()
---     elseif (state == 3) then
---         update_lvlselect()
---     end
--- end
-
--- function _draw()
---     if (state == 0) then
---         draw_title()
---     elseif (state == 1) then
---         draw_game()
---     elseif (state == 2) then
---         draw_scores()
---     elseif (state == 3) then
---         draw_lvlselect()
---     end
--- end
-
 __gfx__
-0000000066c0000066c0000066c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000009666000096660000a66600000000000000000000000000000000000000000000000000000000000000000000000000000080800000e0e00000808000
-00000000666760006667600066676000000000000000000000000000000000000000000000000000000000000000000000000000088888000e8e8e0008080800
-00000000056676660566766605667666000000000000000000000000000000000000000000000000000000000000000000000000088888000e888e0008000800
-000000000566766605667666056676660000000000000000000000000000000000000000000000000000000000000000000000000088800000e8e00000808000
-0000000066676000666760006667600000000000000000000000000000000000000000000000000000000000000000000000000000080000000e000000080000
-0000000096660000a666000096660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000066c0000066c0000066c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000066c0000066d0000066c000006666666b666666636666666b066668000666680006666e00800000000000000000000000000000000000000000000000
+000000009666000096660000a6660000a5556660955566609555666096600000a6600000966000000800000000000000000000000080800000e0e00000808000
+00000000666760006667600066676000066666000666660006666600666600006666000066660000009000000000000000000000088888000e8e8e0008080800
+00000000056676660566766605667666066700000667000006670000066766660667666606676666000a00000000000000000000088888000e888e0008000800
+000000000566766605667666056676660667000006670000066700000667666606676666066766660090000000000000000000000088800000e8e00000808000
+0000000066676000666760006667600006666600066666000666660066660000666600006666000008000000000000000000000000080000000e000000080000
+0000000096660000a66600009666000095556660a5556660955566609660000096600000a6600000800000000000000000000000000000000000000000000000
+0000000066c0000066d0000066c000006666666b666666636666666b066668000666680006666e00000000000000000000000000000000000000000000000000
 00000000000000000000000000999900008888000022220000000000000000000000000090000009000000000000000000000000000000000000000000000000
 00000000000000000009900009000090080000800200002000000000000000000900009000000000000000000000000000000000000000000000000000000000
 00000000000990000090090090000009800000082000000200000000009009000000000000000000000000000000000000000000000000000000000000000000

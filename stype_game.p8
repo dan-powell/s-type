@@ -1,15 +1,32 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-c_game = {
-    pickups = {},
-    shots = {},
-    enemies = {},
-    explosions = {},
-    thrusttrails = {},
-    enemy_queue = {}
-}
-c_game.update = function()
+c_game = {}
+c_game._init = function()
+    c_game.pickups = {}
+    c_game.shots = {}
+    c_game.enemies = {}
+    c_game.explosions = {}
+    c_game.thrusttrails = {}
+    c_game.enemy_queue = {}
+end
+c_game._focus = function(ship)
+    c_game.selectedship = ship
+    for k,p in pairs(config.ship) do
+        c_game.selectedship[k] = p
+    end
+    c_game.setup()
+end
+c_game.setup = function()
+    state = 1
+    status = 1
+    player = {}
+    player.lives = 6
+    player.score = 10
+    player.lvl = 0
+    ship = c_game.new_ship()
+end
+c_game._update = function()
     if status == 0 then
         -- start of level
         if btnp(5) then
@@ -48,42 +65,6 @@ c_game.update = function()
         end
     end
 end
-c_game.draw = function()
-    camera(cam.x, cam.y)
-    cls(0)
-    map(level.mx,level.my,0,0,level.tw,level.th)
-    print(stat(0), cam.x, cam.y + cam.h - 16, 7) -- debug memory
-    print(stat(1), cam.x, cam.y + cam.h - 8, 7) -- debug cpu
-    c_game.draw_actors()
-    c_game.draw_ui()
-    if status == 0 then
-        print('❎ to launch', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
-    end
-    if status == 2 then
-        print('level complete', cam.x + flr(cam.w/2) - 26, cam.y + flr(cam.h/2) + 20, 12)
-        print('❎ for next level', cam.x + flr(cam.w/2) - 32, cam.y + flr(cam.h/2) + 30, 9)
-    end
-    if status == 3 then
-        print('you lost :(', cam.x + flr(cam.w/2) - 20, cam.y + flr(cam.h/2) + 20, 8)
-        print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
-    end
-    if status == 4 then
-        print('you win!', cam.x + flr(cam.w/2) - 16, cam.y + flr(cam.h/2) + 20, 3)
-        print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
-    end
-end
-c_game.focus = function()
-    c_game.start()
-    state = 1
-    status = 1
-end
-c_game.start = function()
-    player = {}
-    player.lives = 6
-    player.score = 10
-    player.lvl = 0
-    ship = c_game.new_ship()
-end
 c_game.reset = function()
     status = 0
     c_game.pickups = {}
@@ -98,7 +79,7 @@ c_game.reset = function()
 end
 c_game.new_ship = function()
     local s = {}
-    for k, v in pairs(config.ship) do
+    for k, v in pairs(c_game.selectedship) do
         s[k] = v
     end
     return s
@@ -354,6 +335,34 @@ c_game.move_actors = function()
     foreach(c_game.shots, c_game.move_shot)
     foreach(c_game.enemies, c_game.move_enemy)
 end
+
+-- --------------------------
+-- draw
+-- --------------------------
+c_game._draw = function()
+    camera(cam.x, cam.y)
+    cls(0)
+    map(level.mx,level.my,0,0,level.tw,level.th)
+    print(stat(0), cam.x, cam.y + cam.h - 16, 7) -- debug memory
+    print(stat(1), cam.x, cam.y + cam.h - 8, 7) -- debug cpu
+    c_game.draw_actors()
+    c_game.draw_ui()
+    if status == 0 then
+        print('❎ to launch', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
+    end
+    if status == 2 then
+        print('level complete', cam.x + flr(cam.w/2) - 26, cam.y + flr(cam.h/2) + 20, 12)
+        print('❎ for next level', cam.x + flr(cam.w/2) - 32, cam.y + flr(cam.h/2) + 30, 9)
+    end
+    if status == 3 then
+        print('you lost :(', cam.x + flr(cam.w/2) - 20, cam.y + flr(cam.h/2) + 20, 8)
+        print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
+    end
+    if status == 4 then
+        print('you win!', cam.x + flr(cam.w/2) - 16, cam.y + flr(cam.h/2) + 20, 3)
+        print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
+    end
+end
 c_game.draw_actors = function()
     foreach(c_game.shots, c_game.draw_shot)
     foreach(c_game.enemies, c_game.draw_enemy)
@@ -407,4 +416,4 @@ c_game.draw_ui = function()
     -- draw score
     print(player.score, cam.x + 9, cam.y + 9, 9)
 end
-controllers["controller_game"] = c_game
+controllers["game"] = c_game
