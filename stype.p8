@@ -50,24 +50,27 @@ config = {
     },
     ships = {
         {
-            n = "rwe",
+            n = "zander",
             d = "all rounder",
+            l = 5,
             fx = 0.7, -- horizontal friction
             fy = 0.7, -- vertical friction
             f = 2, -- force applied when moved
             sp = {1,2,3} -- sprites
         },
         {
-            n = "fdsfds",
-            d = "solid, but slow",
+            n = "henkler",
+            d = "slow and solid",
+            l = 10,
             fx = 0.5, -- horizontal friction
             fy = 0.5, -- vertical friction
             f = 1.5, -- force applied when moved
             sp = {4,5,6} -- sprites
         },
         {
-            n = "rwrewrew",
-            d = "speedy, but delicate",
+            n = "zweiss",
+            d = "speedy yet delicate",
+            l = 3,
             fx = 0.7, -- horizontal friction
             fy = 0.7, -- vertical friction
             f = 2.5, -- force applied when moved
@@ -104,7 +107,7 @@ cam = {
     w = 128,
     h = 128,
     b = 0,
-    vx = 1 -- Velocity
+    vx = 0.5 -- Velocity
 }
 cam.c = flr(cam.h/2)
 
