@@ -18,7 +18,6 @@ c_title._focus = function()
         c_title.create_star(rnd(128))
     end
 
-
     c_title.s = {
         s = 128,
         x = -32,

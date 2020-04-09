@@ -4,7 +4,7 @@ __lua__
 c_ship = {}
 c_ship._init = function()
     c_ship.ships = config.ships
-    c_ship.selected = 1
+    c_ship.selected = 0
 end
 c_ship._update = function()
 
