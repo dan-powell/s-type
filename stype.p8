@@ -243,12 +243,14 @@ levels = {
 -- includes
 -- ====================================
 
-#include stype_title.p8
-#include stype_help.p8
-#include stype_shipselect.p8
-#include stype_game.p8
-#include stype_end.p8
-#include stype_levelselect.p8
+#include classes/enemies.p8
+
+#include controllers/title.p8
+#include controllers/help.p8
+#include controllers/shipselect.p8
+#include controllers/game.p8
+#include controllers/end.p8
+#include controllers/levelselect.p8
 
 -- ====================================
 -- Global Helpers
@@ -378,6 +380,7 @@ end
 function _init()
     printh('_init')
     switchController("title")
+    enemies._init()
 end
 
 __gfx__

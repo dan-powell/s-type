@@ -9,12 +9,12 @@ c_game._init = function()
     c_game.pickups = {}
     c_game.shots = {}
     c_game.tiles = {}
-    c_game.enemies = {}
     c_game.explosions = {}
     c_game.thrusttrails = {}
     c_game.enemy_queue = {}
     c_game.level = levels[1]
     c_game.starfield = {}
+    enemies._init()
 end
 c_game._focus = function(ship)
     c_game.selectedship = ship
@@ -51,7 +51,7 @@ c_game._update = function()
         c_game.move_ship()
         c_game.update_ship()
         c_game.update_shots()
-        c_game.update_enemies()
+        enemies._update()
         c_game.update_tiles()
 
         c_game.timeline += c_game.timeline_speed
@@ -84,8 +84,7 @@ c_game.reset = function()
     c_game.pickups = {}
     c_game.shots = {}
     c_game.tiles = {}
-    c_game.enemies = {}
-    c_game.enemy_queue = {}
+    enemies.reset()
     ship = c_game.new_ship()
 end
 c_game.new_ship = function()
@@ -131,52 +130,6 @@ c_game.add_thrusttrail = function(x, y)
     -- Set the sprites
     add(c_game.thrusttrails, t)
 end
-c_game.new_enemy = function(t, rt)
-    local e = {}
-    for k, v in pairs(t) do
-        e[k] = v
-    end
-
-    e.rt = rt -- Release timer
-    e.lt = t.lt -- Lifetime (total)
-    e.ltr = t.lt -- Lifetime remaining
-    e.st = 0 -- Sprite timer
-
-    e.sx = t.psx
-    e.sy = t.psy
-    e.ex = t.pex
-    e.ey = t.pey
-
-    e.p1x = t.p1x
-    e.p1y = t.p1y
-    e.p2x = t.p2x
-    e.p2y = t.p2y
-
-    return e
-end
-
-c_game.process_enemy_queue = function()
-    for k,enemy in pairs(c_game.enemy_queue) do
-        if(enemy.rt <= 0) then
-            enemy.o = frame
-            add(c_game.enemies, enemy)
-            del(c_game.enemy_queue, enemy)
-        end
-        enemy.rt -= 1
-    end
-end
-
-c_game.trigger_enemies = function()
-    for k,es in pairs(c_game.level.e) do
-        if (ceil(c_game.timeline) == es.t) then
-            for i=1,es.n do
-                add(c_game.enemy_queue, c_game.new_enemy(es, i*10))
-            end
-            -- level.e[k] = nil
-        end
-    end
-end
-
 
 c_game.new_tile = function(tile)
     local t = {}
@@ -223,31 +176,7 @@ c_game.move_tile = function(t)
         del(c_game.tiles, t)
     end
 end
-c_game.update_enemies = function()
 
-    c_game.trigger_enemies()
-    c_game.process_enemy_queue()
-
-    for k1,e in pairs(c_game.enemies) do
-        -- Check if enemy has collided with shot
-        for k2,s in pairs(c_game.shots) do
-            if (s.x > e.x and s.x < (e.x + e.w) and s.y > e.y and s.y < (e.y + e.h)) then
-                player.score += e.pv
-                c_game.add_explosion(e.x, e.y, 1)
-                del(c_game.enemies, e)
-                del(c_game.shots, s)
-            end
-        end
-        -- Check if enemy has collided with ship
-        if collision(ship, e) then
-            player.score -= e.pv
-            c_game.add_explosion(ship.x, ship.y, 2)
-            del(c_game.enemies, e)
-            ship.s = 0
-            c_game.reset()
-        end
-    end
-end
 c_game.update_ship = function()
     -- Check if ship has collided with brick
     if  collision_tile(ship.x, ship.y, c_game.level) or
@@ -260,17 +189,7 @@ c_game.update_ship = function()
         c_game.reset()
     end
 end
-c_game.move_enemy = function(e)
-    -- Base updated position on a bezier curve (quad)
-    e.x = bezier_quad(e.lt,e.o,e.sx,e.ex,e.p1x,e.p2x)
-    e.y = bezier_quad(e.lt,e.o,e.sy,e.ey,e.p1y,e.p2y)
-    -- Check for end of life and remove
-    if (e.ltr <= 1) then
-        del(c_game.enemies, e)
-    else
-        e.ltr -= 1
-    end
-end
+
 c_game.update_camera = function()
     
 end
@@ -378,7 +297,6 @@ c_game.move_shot = function(s)
 end
 c_game.move_actors = function()
     foreach(c_game.shots, c_game.move_shot)
-    foreach(c_game.enemies, c_game.move_enemy)
     foreach(c_game.tiles, c_game.move_tile)
 end
 
@@ -432,7 +350,7 @@ c_game.draw_starfield = function(s)
 end
 c_game.draw_actors = function()
     foreach(c_game.shots, c_game.draw_shot)
-    foreach(c_game.enemies, c_game.draw_enemy)
+    enemies._draw()
     foreach(c_game.tiles, c_game.draw_tile)
     foreach(c_game.explosions, c_game.draw_explosion)
     foreach(c_game.thrusttrails, c_game.draw_thrusttrail)
@@ -443,15 +361,6 @@ c_game.draw_ship = function()
 end
 c_game.draw_shot = function(s)
     pset(s.x, s.y, 7)
-end
-c_game.draw_enemy = function(e)
-    if(frame%(4)==0) then
-        e.st += 1
-        if(e.st > tablelength(e.s)) then
-            e.st = 1
-        end
-    end
-    spr(e.s[e.st], e.x, e.y, e.sw, e.sh)
 end
 c_game.draw_tile = function(t)
     if(frame%(4)==0) then
