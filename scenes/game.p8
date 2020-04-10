@@ -12,8 +12,7 @@ s_game._init = function()
     s_game.level = levels[1]
     s_game.starfield = {}
 end
-s_game._focus = function(ship)
-    c_ship.select(ship)
+s_game._focus = function()
     s_game.setup()
 end
 s_game._update = function()
@@ -22,7 +21,9 @@ s_game._update = function()
 
     if s_game.state == 0 then
         -- start of level
-        if btnp(5) then
+        if(timer.get('intro') < 50) then
+            c_ship.move_x(1)
+        else
             s_game.state = 1
         end
         s_game.timeline_speed = 10
@@ -78,9 +79,10 @@ s_game._draw = function()
     c_explosions._draw()
     c_shots._draw()
     s_game.draw_ui()
-    -- if status == 0 then
-    --     print('❎ to launch', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
-    -- end
+
+    if s_game.state == 0 then
+        print('stand by', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
+    end
     -- if status == 2 then
     --     print('level complete', cam.x + flr(cam.w/2) - 26, cam.y + flr(cam.h/2) + 20, 12)
     --     print('❎ for next level', cam.x + flr(cam.w/2) - 32, cam.y + flr(cam.h/2) + 30, 9)
@@ -93,13 +95,13 @@ s_game._draw = function()
     --     print('you win!', cam.x + flr(cam.w/2) - 16, cam.y + flr(cam.h/2) + 20, 3)
     --     print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
     -- end
+
 end
 -- ===========
 -- core
 -- ===========
 s_game.setup = function()
-    s_game.state = 0
-    status = 1
+    s_game.reset()
     player = {}
     player.lives = 6
     player.score = 10
@@ -113,6 +115,11 @@ s_game.reset = function()
     c_tiles.reset()
     c_shots.reset()
     c_ship.reset()
+
+    c_ship.move_to_x(-8)
+    c_ship.move_to_cy(0)
+
+    timer.new('intro')
 end
 s_game.move_ship = function()
     if btn(0) then c_ship.move('l') end

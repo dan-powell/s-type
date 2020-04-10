@@ -34,20 +34,6 @@ physics.vymax_pos = 10 -- max y velocity
 
 -- config defaults
 config = {
-    ship = {
-        s = 1,
-        t = 1, -- type 1 = main, 2 = space
-        w = 8, -- width
-        h = 8, -- height
-        x = 64, -- absolute x position
-        y = 64, -- absolute y position
-        vx = 0, -- x velocity (pixels moved per frame)
-        vy = 0, -- y velocity (pixels moved per frame)
-        sw = 1, -- sprite width (in tiles)
-        sh = 1, -- sprite height (in tiles)
-        dx = -1, -- direction (+1 right -1 left)
-        dy = -1, -- direction (+1 down -1 up)
-    },
     ships = {
         {
             n = "zander",
@@ -100,17 +86,70 @@ config = {
     }
 }
 
+
+timer = {}
+timer.timers = {}
+timer.new = function(n)
+    timer.timers[n] = {
+        v = 0,
+        s = 1
+    }
+end
+timer._update = function()
+    for k,v in pairs(timer.timers) do
+        v.v += v.s
+    end
+end
+timer.get = function(n)
+    if (timer.timers[n]) then
+        return timer.timers[n].v
+    else
+        printh('get timer error - not found')
+        return nil
+    end
+end
+timer.remove = function(n)
+    if (timer.timers[n]) then
+        del(timer.timers, n)
+    else
+        printh('remove timer error - not found')
+    end
+end
+
+
 -- camera attributes
+
+cam = {
+    x = 0,
+    y = 0,
+    w = 128,
+    h = 128,
+}
+-- position of camera
+cam.rel_x = function(x)
+    return cam.x + x
+end
+cam.rel_y = function(y)
+    return cam.y + y
+end
+-- position of camera from center
+cam.rel_cy = function(x)
+    return ceil(cam.w/2) + cam.x + x
+end
+cam.rel_cy = function(y)
+    return ceil(cam.h/2) + cam.y + y
+end
+
 area = {
     x = 0,
     y = 11,
     w = 128,
     h = 117,
 }
-area.center_x = function()
+area.cx = function()
     return ceil(area.w/2) + ceil(area.x/2)
 end
-area.center_y = function()
+area.cy = function()
     return ceil(area.h/2) + ceil(area.y/2)
 end
 
@@ -240,7 +279,7 @@ levels = {
 }
 
 -- ===========
--- includes
+-- Controllers
 -- ===========
 
 #include controllers/enemies.p8
@@ -248,6 +287,10 @@ levels = {
 #include controllers/tiles.p8
 #include controllers/shots.p8
 #include controllers/explosions.p8
+
+-- ===========
+-- Scenes
+-- ===========
 
 #include scenes/title.p8
 #include scenes/help.p8
@@ -349,6 +392,7 @@ end
 
 function _update()
     tick += 1
+    timer._update()
     if (scene_current._update) then scene_current._update() end
 end
 

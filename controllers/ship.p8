@@ -3,9 +3,26 @@ version 18
 __lua__
 
 c_ship = {}
+c_ship.ship = {}
+c_ship.trails = {}
+c_ship.current = 1
+c_ship.config = {
+    s = 1,
+    t = 1, -- type 1 = main, 2 = space
+    w = 8, -- width
+    h = 8, -- height
+    x = 0, -- absolute x position
+    y = 0, -- absolute y position
+    vx = 0, -- x velocity (pixels moved per frame)
+    vy = 0, -- y velocity (pixels moved per frame)
+    sw = 1, -- sprite width (in tiles)
+    sh = 1, -- sprite height (in tiles)
+    dx = -1, -- direction (+1 right -1 left)
+    dy = -1, -- direction (+1 down -1 up)
+}
+
 c_ship._init = function()
-    c_ship.ship = {}
-    c_ship.trails = {}
+    c_ship.select(1)
 end
 
 c_ship._update = function()
@@ -22,25 +39,53 @@ c_ship._update = function()
 end
 
 c_ship.select = function(s)
-    c_ship.selectedship = s
-    for k,p in pairs(config.ship) do
-        c_ship.selectedship[k] = p
-    end
+    c_ship.current = s
     c_ship.ship = c_ship.new()
-    --ship = c_ship.new() -- temp
 end
 
 c_ship.new = function()
     local s = {}
-    for k, v in pairs(c_ship.selectedship) do
+    for k,v in pairs(c_ship.config) do
+        s[k] = v
+    end
+    for k,v in pairs(config.ships[c_ship.current]) do
         s[k] = v
     end
     return s
 end
 
+-- Move ship to coordinates relative to camera position
+c_ship.move_to = function(x, y)
+    c_ship.ship.x = cam.rel_x(x)
+    c_ship.ship.y = cam.rel_y(y)
+end
+
+c_ship.move_to_x = function(x)
+    c_ship.ship.x = cam.rel_x(x)
+end
+
+c_ship.move_to_y = function(y)
+    c_ship.ship.y = cam.rel_y(y)
+end
+
+-- Move ship to coordinates relative to camera center position
+c_ship.move_to_c = function(x, y)
+    c_ship.ship.x = cam.rel_cx(x)
+    c_ship.ship.y = cam.rel_cy(y)
+end
+
+c_ship.move_to_cx = function(x)
+    c_ship.ship.x = cam.rel_cx(x)
+end
+
+c_ship.move_to_cy = function(y)
+    c_ship.ship.y = cam.rel_cy(y)
+end
+
+
+
 c_ship.reset = function()
     c_ship.ship = c_ship.new()
-    --ship = c_ship.new() -- temp
 end
 
 c_ship.get = function()
@@ -49,6 +94,14 @@ end
 
 c_ship.hide = function()
     c_ship.ship.s = 0
+end
+
+c_ship.move_x = function(x)
+    c_ship.ship.x += x
+end
+
+c_ship.move_y = function(y)
+    c_ship.ship.y += y
 end
 
 c_ship.move = function(d)
@@ -60,12 +113,12 @@ c_ship.move = function(d)
     if d == 'u' then s.vy -= s.f end
     if d == 'd' then s.vy += s.f end
 
-    c_ship.add_thrusttrail(s.x, s.y + 1)
-    c_ship.add_thrusttrail(s.x, s.y + s.h - 2)
+    c_ship.add_trail(s.x, s.y + 1)
+    c_ship.add_trail(s.x, s.y + s.h - 2)
 end
 
 c_ship.update_position = function()
-    
+
     local s = c_ship.get()
 
     -- apply friction
@@ -130,7 +183,7 @@ c_ship.update_position = function()
 
 end
 
-c_ship.add_thrusttrail = function(x, y)
+c_ship.add_trail = function(x, y)
      -- Set default parameters
     local t = {
         x = x,

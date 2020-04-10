@@ -2,17 +2,15 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 s_ship = {}
--- ===========
--- core
--- ===========
 s_ship._init = function()
-    s_ship.ships = config.ships
+  	s_ship.ships = config.ships
     s_ship.selected = 0
 end
 s_ship._update = function()
 
     if btnp(5) then
-        switchScene("game", s_ship.ships[s_ship.selected + 1])
+        c_ship.select(s_ship.selected + 1)
+        switchScene("game")
     end
 
     if btnp(2) then
