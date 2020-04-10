@@ -2,10 +2,10 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 
--- s-Type - an game by Matt and Dan
+-- S-Type - an game by Matt and Dan
 
 -- ====================================
--- Globa Variables
+-- Global Variables
 -- ====================================
 
 -- basic de-buggery

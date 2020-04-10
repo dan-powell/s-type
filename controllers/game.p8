@@ -10,7 +10,6 @@ c_game._init = function()
     c_game.shots = {}
     c_game.tiles = {}
     c_game.explosions = {}
-    c_game.thrusttrails = {}
     c_game.enemy_queue = {}
     c_game.level = levels[1]
     c_game.starfield = {}
@@ -108,18 +107,6 @@ c_game.add_explosion = function(x, y, t)
     end
     add(c_game.explosions, e)
 end
-c_game.add_thrusttrail = function(x, y)
-     -- Set default parameters
-    local t = {
-        x = x,
-        y = y,
-        c = 1, -- current cycle
-        lc = 15 -- lifecycles (lasts for x frames)
-    }
-    t.cl = {7,10,9,8,1} -- colour list to cycle through
-    -- Set the sprites
-    add(c_game.thrusttrails, t)
-end
 
 c_game.new_tile = function(tile)
     local t = {}
@@ -183,17 +170,10 @@ c_game.update_shots = function()
     end
 end
 c_game.move_ship = function()
-    
     if btn(0) then c_ship.move('l') end
     if btn(1) then c_ship.move('r') end
     if btn(2) then c_ship.move('u') end
     if btn(3) then c_ship.move('d') end
-
-    -- Add thrust trails
-    local s = c_ship.get()
-    c_game.add_thrusttrail(s.x, s.y + 1)
-    c_game.add_thrusttrail(s.x, s.y + s.h - 2)
-
 end
 c_game.move_shot = function(s)
     s.x += s.vx
@@ -268,7 +248,7 @@ c_game.draw_actors = function()
     
     foreach(c_game.tiles, c_game.draw_tile)
     foreach(c_game.explosions, c_game.draw_explosion)
-    foreach(c_game.thrusttrails, c_game.draw_thrusttrail)
+    
 end
 c_game.draw_shot = function(s)
     pset(s.x, s.y, 7)
@@ -292,14 +272,7 @@ c_game.draw_explosion = function(e)
     end
     spr(e.as[e.cs], e.x, e.y)
 end
-c_game.draw_thrusttrail = function(t)
-    if(t.c >= t.lc) then
-        del(c_game.thrusttrails, t)
-    else
-        t.c += 1;
-    end
-    pset(t.x, t.y, t.cl[ceil(count(t.cl)/(t.lc/t.c))])
-end
+
 c_game.draw_ui = function()
 
     rectfill(0,0,127,10,2)

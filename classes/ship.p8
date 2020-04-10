@@ -5,6 +5,7 @@ __lua__
 c_ship = {}
 c_ship._init = function()
     c_ship.ship = {}
+    c_ship.trails = {}
 end
 
 c_ship._update = function()
@@ -52,11 +53,15 @@ end
 
 c_ship.move = function(d)
     local s = c_ship.get()
+
     -- create a force acting on the ship
     if d == 'l' then s.vx -= s.f end
     if d == 'r' then s.vx += s.f end
     if d == 'u' then s.vy -= s.f end
     if d == 'd' then s.vy += s.f end
+
+    c_ship.add_thrusttrail(s.x, s.y + 1)
+    c_ship.add_thrusttrail(s.x, s.y + s.h - 2)
 end
 
 c_ship.update_position = function()
@@ -125,7 +130,30 @@ c_ship.update_position = function()
 
 end
 
+c_ship.add_thrusttrail = function(x, y)
+     -- Set default parameters
+    local t = {
+        x = x,
+        y = y,
+        c = 1, -- current cycle
+        lc = 15 -- lifecycles (lasts for x frames)
+    }
+    t.cl = {7,10,9,8,1} -- colour list to cycle through
+    -- Set the sprites
+    add(c_ship.trails, t)
+end
+
 c_ship._draw = function()
     local s = c_ship.get()
+    foreach(c_ship.trails, c_ship.draw_trail)
     spr(s.sp[frame%(count(s.sp))+1], s.x, s.y)
+end
+
+c_ship.draw_trail = function(t)
+    if(t.c >= t.lc) then
+        del(c_ship.trails, t)
+    else
+        t.c += 1;
+    end
+    pset(t.x, t.y, t.cl[ceil(count(t.cl)/(t.lc/t.c))])
 end
