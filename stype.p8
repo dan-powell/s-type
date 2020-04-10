@@ -245,6 +245,9 @@ levels = {
 
 #include classes/enemies.p8
 #include classes/ship.p8
+#include classes/tiles.p8
+#include classes/shots.p8
+#include classes/explosions.p8
 
 #include controllers/title.p8
 #include controllers/help.p8
@@ -382,6 +385,9 @@ function _init()
     printh('_init')
     switchController("title")
     c_ship._init()
+    c_shots._init()
+    c_tiles._init()
+    c_explosions._init()
     enemies._init()
 end
 

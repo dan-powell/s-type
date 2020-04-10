@@ -20,19 +20,19 @@ enemies._update = function()
 
     for k1,e in pairs(enemies.actors) do
         -- Check if enemy has collided with shot
-        for k2,s in pairs(c_game.shots) do
+        for k2,s in pairs(c_shots.actors) do
             if (s.x > e.x and s.x < (e.x + e.w) and s.y > e.y and s.y < (e.y + e.h)) then
                 player.score += e.pv
-                c_game.add_explosion(e.x, e.y, 1)
+                c_explosions.new(e.x, e.y, 1)
                 del(enemies.actors, e)
-                del(c_game.shots, s)
+                del(c_shots.actors, s)
             end
         end
         -- Check if enemy has collided with ship
         local s = c_ship.get()
         if collision(s, e) then
             player.score -= e.pv
-            c_game.add_explosion(s.x, s.y, 2)
+            c_explosions.new(s.x, s.y, 2)
             del(enemies.actors, e)
             c_ship.hide()
             c_game.reset()
