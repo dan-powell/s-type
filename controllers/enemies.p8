@@ -1,30 +1,30 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-enemies = {}
+c_enemies = {}
 -- --------------------------
 -- init
 -- --------------------------
-enemies._init = function()
-    enemies.actors = {}
-    enemies.queue = {}
+c_enemies._init = function()
+    c_enemies.actors = {}
+    c_enemies.queue = {}
 end
 
 -- --------------------------
 -- update
 -- --------------------------
-enemies._update = function()
-    enemies.trigger()
-    enemies.process_queue()
-    foreach(enemies.actors, enemies.move)
+c_enemies._update = function()
+    c_enemies.trigger()
+    c_enemies.process_queue()
+    foreach(c_enemies.actors, c_enemies.move)
 
-    for k1,e in pairs(enemies.actors) do
+    for k1,e in pairs(c_enemies.actors) do
         -- Check if enemy has collided with shot
         for k2,s in pairs(c_shots.actors) do
             if (s.x > e.x and s.x < (e.x + e.w) and s.y > e.y and s.y < (e.y + e.h)) then
                 player.score += e.pv
                 c_explosions.new(e.x, e.y, 1)
-                del(enemies.actors, e)
+                del(c_enemies.actors, e)
                 del(c_shots.actors, s)
             end
         end
@@ -33,9 +33,9 @@ enemies._update = function()
         if collision(s, e) then
             player.score -= e.pv
             c_explosions.new(s.x, s.y, 2)
-            del(enemies.actors, e)
+            del(c_enemies.actors, e)
             c_ship.hide()
-            c_game.reset()
+            s_game.reset()
         end
     end
 end
@@ -43,12 +43,12 @@ end
 -- --------------------------
 -- methods
 -- --------------------------
-enemies.reset = function()
-    enemies.actors = {}
-    enemies.queue = {}
+c_enemies.reset = function()
+    c_enemies.actors = {}
+    c_enemies.queue = {}
 end
 
-enemies.new = function(t, rt)
+c_enemies.new = function(t, rt)
     local e = {}
     for k, v in pairs(t) do
         e[k] = v
@@ -72,34 +72,34 @@ enemies.new = function(t, rt)
     return e
 end
 
-enemies.process_queue = function()
-    for k,e in pairs(enemies.queue) do
+c_enemies.process_queue = function()
+    for k,e in pairs(c_enemies.queue) do
         if(e.rt <= 0) then
             e.o = frame
-            add(enemies.actors, e)
-            del(enemies.queue, e)
+            add(c_enemies.actors, e)
+            del(c_enemies.queue, e)
         end
         e.rt -= 1
     end
 end
 
-enemies.trigger = function()
-    for k,es in pairs(c_game.level.e) do
-        if (ceil(c_game.timeline) == es.t) then
+c_enemies.trigger = function()
+    for k,es in pairs(s_game.level.e) do
+        if (ceil(s_game.timeline) == es.t) then
             for i=1,es.n do
-                add(enemies.queue, enemies.new(es, i*10))
+                add(c_enemies.queue, c_enemies.new(es, i*10))
             end
         end
     end
 end
 
-enemies.move = function(e)
+c_enemies.move = function(e)
     -- Base updated position on a bezier curve (quad)
     e.x = bezier_quad(e.lt,e.o,e.sx,e.ex,e.p1x,e.p2x)
     e.y = bezier_quad(e.lt,e.o,e.sy,e.ey,e.p1y,e.p2y)
     -- Check for end of life and remove
     if (e.ltr <= 1) then
-        del(enemies.actors, e)
+        del(c_enemies.actors, e)
     else
         e.ltr -= 1
     end
@@ -109,11 +109,11 @@ end
 -- draw
 -- --------------------------
 
-enemies._draw = function()
-    foreach(enemies.actors, enemies.draw_actor)
+c_enemies._draw = function()
+    foreach(c_enemies.actors, c_enemies.draw_actor)
 end
 
-enemies.draw_actor = function(e)
+c_enemies.draw_actor = function(e)
     if(frame%(4)==0) then
         e.st += 1
         if(e.st > tablelength(e.s)) then

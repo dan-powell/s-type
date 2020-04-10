@@ -10,14 +10,14 @@ end
 
 c_ship._update = function()
     c_ship.update_position()
-    if  collision_tile(c_ship.ship.x, c_ship.ship.y, c_game.level) or
-        collision_tile(c_ship.ship.x + c_ship.ship.w, c_ship.ship.y, c_game.level) or
-        collision_tile(c_ship.ship.x, c_ship.ship.y + c_ship.ship.h, c_game.level) or
-        collision_tile(c_ship.ship.x + c_ship.ship.w, c_ship.ship.y + c_ship.ship.h, c_game.level) then
+    if  collision_tile(c_ship.ship.x, c_ship.ship.y, s_game.level) or
+        collision_tile(c_ship.ship.x + c_ship.ship.w, c_ship.ship.y, s_game.level) or
+        collision_tile(c_ship.ship.x, c_ship.ship.y + c_ship.ship.h, s_game.level) or
+        collision_tile(c_ship.ship.x + c_ship.ship.w, c_ship.ship.y + c_ship.ship.h, s_game.level) then
         player.score -= 99
-        c_game.add_explosion(c_ship.ship.x, c_ship.ship.y, 2)
+        s_game.add_explosion(c_ship.ship.x, c_ship.ship.y, 2)
         c_ship.hide()
-        c_game.reset()
+        s_game.reset()
     end
 end
 
@@ -87,7 +87,7 @@ c_ship.update_position = function()
 
     -- ship can't leave level edges
     local offset = 0
-    if c_game.state == 0 then
+    if s_game.state == 0 then
         offset = 8
     end
 
@@ -95,8 +95,8 @@ c_ship.update_position = function()
         s.x = offset
         s.vx = 0
     end
-    if s.x > c_game.level.w - s.w - offset then
-        s.x = c_game.level.w - s.w - offset
+    if s.x > s_game.level.w - s.w - offset then
+        s.x = s_game.level.w - s.w - offset
         s.vx = 0
     end
 
@@ -104,8 +104,8 @@ c_ship.update_position = function()
         s.y = offset
         s.vy = 0
     end
-    if s.y > c_game.level.h - s.h - offset then
-        s.y = c_game.level.h - s.h - offset
+    if s.y > s_game.level.h - s.h - offset then
+        s.y = s_game.level.h - s.h - offset
         s.vy = 0
     end
 

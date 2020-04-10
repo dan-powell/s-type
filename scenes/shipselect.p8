@@ -2,6 +2,9 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 s_ship = {}
+-- ===========
+-- core
+-- ===========
 s_ship._init = function()
     s_ship.ships = config.ships
     s_ship.selected = 0
@@ -9,7 +12,7 @@ end
 s_ship._update = function()
 
     if btnp(5) then
-        switchController("game", s_ship.ships[s_ship.selected + 1])
+        switchScene("game", s_ship.ships[s_ship.selected + 1])
     end
 
     if btnp(2) then
@@ -32,7 +35,7 @@ s_ship._draw = function()
     print("choose your ship", 64-14*2, 20, 2)
 
     local i = 0
-    
+
     -- display each of the ship types
     for s in all(s_ship.ships) do
         local y = i * 30 + 40
@@ -46,6 +49,9 @@ s_ship._draw = function()
     end
 
 end
+-- ===========
+-- private methods
+-- ===========
 s_ship.next_ship = function()
     local i = s_ship.selected + 1
     return min(i, #s_ship.ships - 1)
@@ -54,4 +60,4 @@ s_ship.prev_ship = function()
     local i = s_ship.selected - 1
     return max(i, 0)
 end
-controllers["shipselect"] = s_ship
+scenes["shipselect"] = s_ship

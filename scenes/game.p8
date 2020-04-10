@@ -1,109 +1,83 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-c_game = {}
-c_game._init = function()
-    c_game.state = 0
-    c_game.timeline = 0
-    c_game.timeline_speed = 1
-    c_game.level = levels[1]
-    c_game.starfield = {}
+s_game = {}
+-- ===========
+-- core
+-- ===========
+s_game._init = function()
+    s_game.state = 0
+    s_game.timeline = 0
+    s_game.timeline_speed = 1
+    s_game.level = levels[1]
+    s_game.starfield = {}
 end
-c_game._focus = function(ship)
+s_game._focus = function(ship)
     c_ship.select(ship)
-    c_game.setup()
+    s_game.setup()
 end
-c_game.setup = function()
-    c_game.state = 0
-    status = 1
-    player = {}
-    player.lives = 6
-    player.score = 10
-    player.lvl = 0
-end
-c_game._update = function()
+s_game._update = function()
 
-    c_game.create_star(0)
+    s_game.create_star(0)
 
-    if c_game.state == 0 then
+    if s_game.state == 0 then
         -- start of level
         if btnp(5) then
-            c_game.state = 1
+            s_game.state = 1
         end
-        c_game.timeline_speed = 10
+        s_game.timeline_speed = 10
     end
 
-    if c_game.state == 1 then
-        c_game.timeline_speed = 1
+    if s_game.state == 1 then
+        s_game.timeline_speed = 1
         -- level in progress
-        c_game.move_ship()
+        s_game.move_ship()
         c_ship._update()
         c_shots._update()
-        enemies._update()
+        c_enemies._update()
         c_tiles._update()
 
-        c_game.timeline += c_game.timeline_speed
+        s_game.timeline += s_game.timeline_speed
     end
 
-    if c_game.state == 2 then
+    if s_game.state == 2 then
         -- level complete
         if btnp(5) then
             next()
         end
     end
 
-    if c_game.state == 3 then
+    if s_game.state == 3 then
         -- level lost
         if btnp(5) then
             finish()
         end
     end
 
-    if c_game.state == 4 then
+    if s_game.state == 4 then
         -- game won
         if btnp(5) then
             finish()
         end
     end
 end
-c_game.reset = function()
-    c_game.state = 0
-    c_game.timeline -= 128
-
-    enemies.reset()
-    c_tiles.reset()
-    c_shots.reset()
-    c_ship.reset()
-end
-
-
-c_game.move_ship = function()
-    if btn(0) then c_ship.move('l') end
-    if btn(1) then c_ship.move('r') end
-    if btn(2) then c_ship.move('u') end
-    if btn(3) then c_ship.move('d') end
-end
-
--- --------------------------
--- draw
--- --------------------------
-c_game._draw = function()
+s_game._draw = function()
     camera(0,0)
     cls(1)
-    map(c_game.level.mx,c_game.level.my,0,0,c_game.level.tw,c_game.level.th)
+    map(s_game.level.mx,s_game.level.my,0,0,s_game.level.tw,s_game.level.th)
     if debug then
-        print('t: ' .. c_game.timeline, 80, 121, 7) -- debug memory
+        print('t: ' .. s_game.timeline, 80, 121, 7) -- debug memory
         print('mem: ' .. stat(0), 2, 113, 7) -- debug memory
         print('cpu: ' .. stat(1), 2, 121, 7) -- debug cpu
     end
-    foreach(c_game.starfield, c_game.draw_starfield)
-    
+    foreach(s_game.starfield, s_game.draw_starfield)
+
     c_tiles._draw()
-    enemies._draw()
+    c_enemies._draw()
     c_ship._draw()
     c_explosions._draw()
     c_shots._draw()
-    c_game.draw_ui()
+    s_game.draw_ui()
     -- if status == 0 then
     --     print('❎ to launch', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
     -- end
@@ -120,7 +94,33 @@ c_game._draw = function()
     --     print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
     -- end
 end
-c_game.create_star = function(x)
+-- ===========
+-- core
+-- ===========
+s_game.setup = function()
+    s_game.state = 0
+    status = 1
+    player = {}
+    player.lives = 6
+    player.score = 10
+    player.lvl = 0
+end
+s_game.reset = function()
+    s_game.state = 0
+    s_game.timeline -= 128
+
+    c_enemies.reset()
+    c_tiles.reset()
+    c_shots.reset()
+    c_ship.reset()
+end
+s_game.move_ship = function()
+    if btn(0) then c_ship.move('l') end
+    if btn(1) then c_ship.move('r') end
+    if btn(2) then c_ship.move('u') end
+    if btn(3) then c_ship.move('d') end
+end
+s_game.create_star = function(x)
     local s = {}
     s.x = 128
     s.y = rnd(128)
@@ -128,17 +128,17 @@ c_game.create_star = function(x)
     s.vx = rnd(1) * 3
     col = {1,5,6,13} -- colour pool
     s.c = col[ceil(rnd(count(col)))] -- pick a colour
-    add(c_game.starfield, s)
+    add(s_game.starfield, s)
 end
-c_game.draw_starfield = function(s)
-    s.x -= s.vx * c_game.timeline_speed
+s_game.draw_starfield = function(s)
+    s.x -= s.vx * s_game.timeline_speed
     pset(s.x, s.y, s.c)
     if s.x < 0 then
-        del(c_game.starfield, s)
+        del(s_game.starfield, s)
     end
 end
 
-c_game.draw_ui = function()
+s_game.draw_ui = function()
 
     rectfill(0,0,127,10,2)
 
@@ -154,4 +154,4 @@ c_game.draw_ui = function()
     -- draw score
     print(player.score, 2, 2, 9)
 end
-controllers["game"] = c_game
+scenes["game"] = s_game

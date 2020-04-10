@@ -13,20 +13,20 @@ c_tiles._update = function()
 
     foreach(c_tiles.actors, c_tiles.move)
 
-    for k,t in pairs(c_game.level.t) do
-        if (ceil(c_game.timeline) == t.t) then
+    for k,t in pairs(s_game.level.t) do
+        if (ceil(s_game.timeline) == t.t) then
             add(c_tiles.actors, c_tiles.new(t))
         end
     end
 
     for k1,t in pairs(c_tiles.actors) do
         -- Check if enemy has collided with shot
-        -- for k2,s in pairs(c_game.shots) do
+        -- for k2,s in pairs(s_game.shots) do
         --     if (s.x > e.x and s.x < (e.x + e.w) and s.y > e.y and s.y < (e.y + e.h)) then
         --         player.score += e.pv
-        --         c_game.add_explosion(e.x, e.y, 1)
-        --         del(c_game.enemies, e)
-        --         del(c_game.shots, s)
+        --         s_game.add_explosion(e.x, e.y, 1)
+        --         del(s_game.enemies, e)
+        --         del(s_game.shots, s)
         --     end
         -- end
         -- Check if enemy has collided with ship
@@ -35,7 +35,7 @@ c_tiles._update = function()
             c_explosions.new(s.x, s.y, 2)
             del(c_tiles.actors, t)
             c_ship.hide()
-            c_game.reset()
+            s_game.reset()
         end
     end
 end
@@ -72,10 +72,10 @@ c_tiles.new = function(tile)
 end
 
 c_tiles.move = function(t)
-    t.x -= c_game.timeline_speed
+    t.x -= s_game.timeline_speed
     -- Check for end of life and remove
     if (t.x < 0) then
-        del(c_game.tiles, t)
+        del(s_game.tiles, t)
     end
 end
 

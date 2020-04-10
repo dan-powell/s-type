@@ -4,9 +4,9 @@ __lua__
 
 -- S-Type - an game by Matt and Dan
 
--- ====================================
+-- ===========
 -- Global Variables
--- ====================================
+-- ===========
 
 -- basic de-buggery
 debug = true
@@ -15,8 +15,8 @@ tick = 0
 version = "0.0.2 alpha"
 lvlselect = {0,0,1,1,0,1}
 
-controller_current = {}
-controllers = {}
+scene_current = {}
+scenes = {}
 
 -- tile grid
 grid = {}
@@ -204,12 +204,12 @@ levels = {
                 pv = 100,
 
                 psx = 0,
-                psy = 0, 
-                pex = 128, 
-                pey = 128, 
-                p1x = 0, 
-                p1y = 128, 
-                p2x = 128, 
+                psy = 0,
+                pex = 128,
+                pey = 128,
+                p1x = 0,
+                p1y = 128,
+                p2x = 128,
                 p2y = 0,
             },
             d = {
@@ -239,26 +239,26 @@ levels = {
     },
 }
 
--- ====================================
+-- ===========
 -- includes
--- ====================================
+-- ===========
 
-#include classes/enemies.p8
-#include classes/ship.p8
-#include classes/tiles.p8
-#include classes/shots.p8
-#include classes/explosions.p8
+#include controllers/enemies.p8
+#include controllers/ship.p8
+#include controllers/tiles.p8
+#include controllers/shots.p8
+#include controllers/explosions.p8
 
-#include controllers/title.p8
-#include controllers/help.p8
-#include controllers/shipselect.p8
-#include controllers/game.p8
-#include controllers/end.p8
-#include controllers/levelselect.p8
+#include scenes/title.p8
+#include scenes/help.p8
+#include scenes/shipselect.p8
+#include scenes/game.p8
+#include scenes/end.p8
+#include scenes/levelselect.p8
 
--- ====================================
+-- ===========
 -- Global Helpers
--- ====================================
+-- ===========
 
 -- Get the length of a table
 function tablelength(t)
@@ -343,52 +343,52 @@ function bezier_quad(l,o,s,e,p1,p2)
     return (1-t)*(1-t)*(1-t)*s + 3*(1-t)*(1-t)*t*p1 + 3*(1-t)*t*t*p2 + t*t*t*e
 end
 
--- ====================================
--- state management
--- ====================================
+-- ===========
+-- scene management
+-- ===========
 
 function _update()
     tick += 1
-    if (controller_current._update) then controller_current._update() end
+    if (scene_current._update) then scene_current._update() end
 end
 
 function _draw()
     frame += 1
-    if (controller_current._draw) then controller_current._draw() end
+    if (scene_current._draw) then scene_current._draw() end
 end
 
-function switchController(newController, data)
-    printh('switching to ' .. newController)
-    found = controllers[newController]
-    if (found == nil) then 
+function switchScene(newScene, data)
+    printh('switching to ' .. newScene)
+    found = scenes[newScene]
+    if (found == nil) then
         printh('controller not found')
-        return 
+        return
     end
-    if (found) then newController = found end
-    if (controller_current._blur) then 
+    if (found) then newScene = found end
+    if (scene_current._blur) then
         printh('controller blur')
-        controller_current._blur()
+        scene_current._blur()
     end
-    controller_current = newController
-    if (controller_current._init and controller_current.init == nil) then 
+    scene_current = newScene
+    if (scene_current._init and scene_current.init == nil) then
         printh('controller init')
-        controller_current.init = true
-        controller_current._init(data)
+        scene_current.init = true
+        scene_current._init(data)
     end
-    if (controller_current._focus) then 
+    if (scene_current._focus) then
         printh('controller focus')
-        controller_current._focus(data)
+        scene_current._focus(data)
     end
 end
 
 function _init()
     printh('_init')
-    switchController("title")
+    switchScene("title")
     c_ship._init()
     c_shots._init()
     c_tiles._init()
     c_explosions._init()
-    enemies._init()
+    c_enemies._init()
 end
 
 __gfx__
@@ -516,4 +516,3 @@ __music__
 00 01424344
 02 01020304
 02 01024344
-

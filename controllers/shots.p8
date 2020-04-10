@@ -34,7 +34,7 @@ c_shots.move = function(s)
     s.x += s.vx
 
     -- If the shot hits a physical tile
-    if collision_tile(s.x, s.y, c_game.level) then
+    if collision_tile(s.x, s.y, s_game.level) then
         del(c_shots.actors, s)
     end
 
