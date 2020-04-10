@@ -29,11 +29,12 @@ enemies._update = function()
             end
         end
         -- Check if enemy has collided with ship
-        if collision(ship, e) then
+        local s = c_ship.get()
+        if collision(s, e) then
             player.score -= e.pv
-            c_game.add_explosion(ship.x, ship.y, 2)
+            c_game.add_explosion(s.x, s.y, 2)
             del(enemies.actors, e)
-            ship.s = 0
+            c_ship.hide()
             c_game.reset()
         end
     end

@@ -17,10 +17,7 @@ c_game._init = function()
     enemies._init()
 end
 c_game._focus = function(ship)
-    c_game.selectedship = ship
-    for k,p in pairs(config.ship) do
-        c_game.selectedship[k] = p
-    end
+    c_ship.select(ship)
     c_game.setup()
 end
 c_game.setup = function()
@@ -30,7 +27,6 @@ c_game.setup = function()
     player.lives = 6
     player.score = 10
     player.lvl = 0
-    ship = c_game.new_ship()
 end
 c_game._update = function()
 
@@ -48,8 +44,8 @@ c_game._update = function()
         c_game.timeline_speed = 1
         -- level in progress
         c_game.move_actors()
+        c_ship._update()
         c_game.move_ship()
-        c_game.update_ship()
         c_game.update_shots()
         enemies._update()
         c_game.update_tiles()
@@ -85,15 +81,9 @@ c_game.reset = function()
     c_game.shots = {}
     c_game.tiles = {}
     enemies.reset()
-    ship = c_game.new_ship()
+    c_ship.reset()
 end
-c_game.new_ship = function()
-    local s = {}
-    for k, v in pairs(c_game.selectedship) do
-        s[k] = v
-    end
-    return s
-end
+
 c_game.add_shot = function(x, y)
     local s = {}
     s.vx = config.shot.vx
@@ -160,10 +150,11 @@ c_game.update_tiles = function()
         --     end
         -- end
         -- Check if enemy has collided with ship
-        if collision(ship, t) then
-            c_game.add_explosion(ship.x, ship.y, 2)
+        local s = c_ship.get()
+        if collision(s, t) then
+            c_game.add_explosion(s.x, s.y, 2)
             del(c_game.tiles, t)
-            ship.s = 0
+            c_ship.hide()
             c_game.reset()
         end
     end
@@ -177,18 +168,6 @@ c_game.move_tile = function(t)
     end
 end
 
-c_game.update_ship = function()
-    -- Check if ship has collided with brick
-    if  collision_tile(ship.x, ship.y, c_game.level) or
-        collision_tile(ship.x + ship.w, ship.y, c_game.level) or
-        collision_tile(ship.x, ship.y + ship.h, c_game.level) or
-        collision_tile(ship.x + ship.w, ship.y + ship.h, c_game.level) then
-        player.score -= 99
-        c_game.add_explosion(ship.x, ship.y, 2)
-        ship.s = 0
-        c_game.reset()
-    end
-end
 
 c_game.update_camera = function()
     
@@ -197,89 +176,23 @@ c_game.update_shots = function()
     if(not debounce) debounce=0
     debounce += 1
     if btn(5) and debounce > 10 then
-       c_game.add_shot(ship.x + 3, ship.y)
-       c_game.add_shot(ship.x + 3, ship.y + ship.h - 1)
-       debounce = 0
+        local s = c_ship.get()
+        c_game.add_shot(s.x + 3, s.y)
+        c_game.add_shot(s.x + 3, s.y + s.h - 1)
+        debounce = 0
     end
 end
 c_game.move_ship = function()
     
-    -- create a force acting on the ship
-    local f = 0
-    if btn(0) then ship.vx -= ship.f end
-    if btn(1) then ship.vx += ship.f end
-    if btn(2) then ship.vy -= ship.f end
-    if btn(3) then ship.vy += ship.f end
-
-    -- apply friction
-    ship.vx *= ship.fx
-    ship.vy *= ship.fy
-
-    -- set the direction
-    if ship.vx > 1 or ship.vx < -1 then
-        ship.dx = ship.vx
-    end
-
-    if ship.vy > 1 or ship.vy < -1 then
-        ship.dy = ship.vy
-    end
-
-    -- set new position of ship
-    ship.x += ship.vx
-    ship.y += ship.vy
-
-    -- ship can't leave level edges
-    local offset = 0
-    if status == 0 then
-        offset = 8
-    end
-
-    if ship.x < offset then
-        ship.x = offset
-        ship.vx = 0
-    end
-    if ship.x > c_game.level.w - ship.w - offset then
-        ship.x = c_game.level.w - ship.w - offset
-        ship.vx = 0
-    end
-
-    if ship.y < offset then
-        ship.y = offset
-        ship.vy = 0
-    end
-    if ship.y > c_game.level.h - ship.h - offset then
-        ship.y = c_game.level.h - ship.h - offset
-        ship.vy = 0
-    end
-
-    -- ship can't leave camera edges
-    local offset = 0
-    if status == 0 then
-        offset = 8
-    end
-
-    if ship.x < area.x then
-        ship.x = area.x
-        ship.vx = 0
-    end
-    if ship.x > area.x + area.w - ship.w then
-        ship.x = area.x + area.w - ship.w
-        ship.vx = 0
-    end
-
-    if ship.y < area.y then
-        ship.y = area.y
-        ship.vy = 0
-    end
-    if ship.y > area.y + area.h - ship.h then
-        ship.y = area.y + area.h - ship.h
-        ship.vy = 0
-    end
-
+    if btn(0) then c_ship.move('l') end
+    if btn(1) then c_ship.move('r') end
+    if btn(2) then c_ship.move('u') end
+    if btn(3) then c_ship.move('d') end
 
     -- Add thrust trails
-    c_game.add_thrusttrail(ship.x, ship.y + 1)
-    c_game.add_thrusttrail(ship.x, ship.y + ship.h - 2)
+    local s = c_ship.get()
+    c_game.add_thrusttrail(s.x, s.y + 1)
+    c_game.add_thrusttrail(s.x, s.y + s.h - 2)
 
 end
 c_game.move_shot = function(s)
@@ -314,6 +227,8 @@ c_game._draw = function()
     end
     foreach(c_game.starfield, c_game.draw_starfield)
     c_game.draw_actors()
+    enemies._draw()
+    c_ship._draw()
     c_game.draw_ui()
     -- if status == 0 then
     --     print('❎ to launch', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
@@ -344,20 +259,16 @@ end
 c_game.draw_starfield = function(s)
     s.x -= s.vx * c_game.timeline_speed
     pset(s.x, s.y, s.c)
-    if s.y > 128 then
+    if s.x < 0 then
         del(c_game.starfield, s)
     end
 end
 c_game.draw_actors = function()
     foreach(c_game.shots, c_game.draw_shot)
-    enemies._draw()
+    
     foreach(c_game.tiles, c_game.draw_tile)
     foreach(c_game.explosions, c_game.draw_explosion)
     foreach(c_game.thrusttrails, c_game.draw_thrusttrail)
-    c_game.draw_ship()
-end
-c_game.draw_ship = function()
-    spr(ship.sp[frame%(count(ship.sp))+1], ship.x, ship.y)
 end
 c_game.draw_shot = function(s)
     pset(s.x, s.y, 7)

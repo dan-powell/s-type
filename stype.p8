@@ -12,7 +12,7 @@ __lua__
 debug = true
 frame = 0
 tick = 0
-version = "0.0.1 alpha"
+version = "0.0.2 alpha"
 lvlselect = {0,0,1,1,0,1}
 
 controller_current = {}
@@ -244,6 +244,7 @@ levels = {
 -- ====================================
 
 #include classes/enemies.p8
+#include classes/ship.p8
 
 #include controllers/title.p8
 #include controllers/help.p8
@@ -380,6 +381,7 @@ end
 function _init()
     printh('_init')
     switchController("title")
+    c_ship._init()
     enemies._init()
 end
 
