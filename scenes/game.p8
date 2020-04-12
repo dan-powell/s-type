@@ -31,8 +31,8 @@ s_game._update = function()
     end
 
     if s_game.state == 1 then
+        -- regular play
         s_game.timeline_speed = 1
-        -- level in progress
         s_game.move_ship()
         c_ship._update()
         c_shots._update()
@@ -40,6 +40,10 @@ s_game._update = function()
         c_tiles._update()
 
         s_game.timeline += s_game.timeline_speed
+
+        if s_game.timeline > s_game.level.l then
+            s_game.state = 3
+        end
     end
 
     if s_game.state == 2 then
@@ -55,36 +59,37 @@ s_game._update = function()
     end
 
     if s_game.state == 3 then
-        -- level lost
-        if btnp(5) then
-            finish()
-        end
+        -- boss
+        s_game.move_ship()
+        c_ship._update()
+        c_shots._update()
+        c_boss._update()
+
     end
 
-    if s_game.state == 4 then
-        -- game won
-        if btnp(5) then
-            finish()
-        end
-    end
 end
 s_game._draw = function()
     camera(0,0)
     cls(1)
     map(s_game.level.mx,s_game.level.my,0,0,s_game.level.tw,s_game.level.th)
     if debug then
-        print('t: ' .. s_game.timeline, 80, 121, 7) -- debug memory
+        print('t: ' .. s_game.timeline, 80, 121, 7) -- debug timeline
         print('mem: ' .. stat(0), 2, 113, 7) -- debug memory
         print('cpu: ' .. stat(1), 2, 121, 7) -- debug cpu
     end
     foreach(s_game.starfield, s_game.draw_starfield)
 
-    c_tiles._draw()
-    c_enemies._draw()
-    c_ship._draw()
-    c_explosions._draw()
-    c_shots._draw()
-    s_game.draw_ui()
+    if  s_game.state == 0 or
+        s_game.state == 1 or
+        s_game.state == 2
+    then
+        c_tiles._draw()
+        c_enemies._draw()
+        c_ship._draw()
+        c_explosions._draw()
+        c_shots._draw()
+        s_game.draw_ui()
+    end
 
     if s_game.state == 0 then
         print('stand by', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
@@ -92,6 +97,14 @@ s_game._draw = function()
 
     if s_game.state == 2 then
         print('destruction', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
+    end
+
+    if s_game.state == 3 then
+        c_ship._draw()
+        c_explosions._draw()
+        c_boss._draw()
+        c_shots._draw()
+        s_game.draw_ui()
     end
 
 end
