@@ -20,10 +20,11 @@ s_game._update = function()
     s_game.create_star(0)
 
     if s_game.state == 0 then
-        -- start of level
+        -- intro
         if(timer.get('intro') < 50) then
             c_ship.move_x(1)
         else
+            timer.remove('intro')
             s_game.state = 1
         end
         s_game.timeline_speed = 10
@@ -42,10 +43,15 @@ s_game._update = function()
     end
 
     if s_game.state == 2 then
-        -- level complete
-        if btnp(5) then
-            next()
+        -- death
+        if(timer.get('outro') < 50) then
+
+        else
+            s_game.reset()
+            timer.remove('outro')
+            s_game.state = 0
         end
+        s_game.timeline_speed = 0.25
     end
 
     if s_game.state == 3 then
@@ -83,18 +89,10 @@ s_game._draw = function()
     if s_game.state == 0 then
         print('stand by', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
     end
-    -- if status == 2 then
-    --     print('level complete', cam.x + flr(cam.w/2) - 26, cam.y + flr(cam.h/2) + 20, 12)
-    --     print('❎ for next level', cam.x + flr(cam.w/2) - 32, cam.y + flr(cam.h/2) + 30, 9)
-    -- end
-    -- if status == 3 then
-    --     print('you lost :(', cam.x + flr(cam.w/2) - 20, cam.y + flr(cam.h/2) + 20, 8)
-    --     print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
-    -- end
-    -- if status == 4 then
-    --     print('you win!', cam.x + flr(cam.w/2) - 16, cam.y + flr(cam.h/2) + 20, 3)
-    --     print('❎ for scores', cam.x + flr(cam.w/2) - 28, cam.y + flr(cam.h/2) + 30, 9)
-    -- end
+
+    if s_game.state == 2 then
+        print('destruction', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
+    end
 
 end
 -- ===========
@@ -102,10 +100,7 @@ end
 -- ===========
 s_game.setup = function()
     s_game.reset()
-    player = {}
-    player.lives = 6
-    player.score = 10
-    player.lvl = 0
+    c_player.reset()
 end
 s_game.reset = function()
     s_game.state = 0
@@ -122,10 +117,10 @@ s_game.reset = function()
     timer.new('intro')
 end
 s_game.move_ship = function()
-    if btn(0) then c_ship.move('l') end
-    if btn(1) then c_ship.move('r') end
-    if btn(2) then c_ship.move('u') end
-    if btn(3) then c_ship.move('d') end
+    if btn(0) then c_ship.move_d('l') end
+    if btn(1) then c_ship.move_d('r') end
+    if btn(2) then c_ship.move_d('u') end
+    if btn(3) then c_ship.move_d('d') end
 end
 s_game.create_star = function(x)
     local s = {}
@@ -144,21 +139,16 @@ s_game.draw_starfield = function(s)
         del(s_game.starfield, s)
     end
 end
-
 s_game.draw_ui = function()
 
-    rectfill(0,0,127,10,2)
+    rectfill(0,0,127,6,2)
 
     -- draw lives
-    for i = 1, min(player.lives,6) do
-        spr(5, 127 - (i*9), 2)
-    end
-
-    -- if player.lives - 6 > 0 then
-      --  print('+' .. player.lives - 6, cam.x + cam.w - 68, cam.y + 9, 8)
-    -- end
+    -- spr(5, 127 - (i*9), 2)
+    sspr(8,0,8,8, 114,1, 5,5)
+    print(c_player.lives_get(), 120, 1, 9)
 
     -- draw score
-    print(player.score, 2, 2, 9)
+    print(c_player.score_get(), 1, 1, 9)
 end
 scenes["game"] = s_game

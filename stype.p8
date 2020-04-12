@@ -23,68 +23,6 @@ grid = {}
 grid.w = 8
 grid.h = 8
 
--- core physics values
-physics = {}
-physics.gravity = 0.2
-physics.fx = 0.02
-physics.fy = 0.03
-physics.vxmax = 2 -- max x velocity
-physics.vymax = 5 -- max y velocity
-physics.vymax_pos = 10 -- max y velocity
-
--- config defaults
-config = {
-    ships = {
-        {
-            n = "zander",
-            d = "all rounder",
-            l = 5,
-            fx = 0.7, -- horizontal friction
-            fy = 0.7, -- vertical friction
-            f = 2, -- force applied when moved
-            sp = {1,2,3} -- sprites
-        },
-        {
-            n = "henkler",
-            d = "slow and solid",
-            l = 10,
-            fx = 0.5, -- horizontal friction
-            fy = 0.5, -- vertical friction
-            f = 1.5, -- force applied when moved
-            sp = {4,5,6} -- sprites
-        },
-        {
-            n = "zweiss",
-            d = "speedy yet delicate",
-            l = 3,
-            fx = 0.7, -- horizontal friction
-            fy = 0.7, -- vertical friction
-            f = 2.5, -- force applied when moved
-            sp = {7,8,9} -- sprites
-        }
-    },
-    shot = {
-        vx = 10, -- x velocity (pixels moved per frame)
-    },
-    explosion = {
-        w = 8, -- width
-        h = 8, -- height
-        x = 0, -- absolute x position
-        y = 0, -- absolute y position
-        cs = 1,
-    },
-    enemy = {
-        t = 3,
-        h = 10, --
-        w = 8, -- width
-        h = 8, -- height
-        l = 0, -- lifetime
-        x = 0, -- absolute x position
-        y = 0, -- absolute y position
-        sw = 1, -- sprite width (in tiles)
-        sh = 1, -- sprite height (in tiles)
-    }
-}
 
 
 timer = {}
@@ -101,16 +39,14 @@ timer._update = function()
     end
 end
 timer.get = function(n)
-    if (timer.timers[n]) then
-        return timer.timers[n].v
-    else
-        printh('get timer error - not found')
-        return nil
+    if (not timer.timers[n]) then
+        timer.new(n)
     end
+    return timer.timers[n].v
 end
 timer.remove = function(n)
     if (timer.timers[n]) then
-        del(timer.timers, n)
+        timer.timers[n] = nil
     else
         printh('remove timer error - not found')
     end
@@ -142,9 +78,9 @@ end
 
 area = {
     x = 0,
-    y = 11,
+    y = 7,
     w = 128,
-    h = 117,
+    h = 121,
 }
 area.cx = function()
     return ceil(area.w/2) + ceil(area.x/2)
@@ -164,36 +100,26 @@ levels = {
         h = 128, -- height in pixels
         mx = 0, -- map tile x coordinate
         my = 0, -- map tile y coordinate
+        length = 400, -- length of level (time)
         t = {
-            {t = 100, y = 40,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 100, y = 49,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 100, y = 60,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 120, y = 60,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 130, y = 50,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 140, y = 40,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 200, y = 100, s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 200, y = 20,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 250, y = 40,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 270, y = 40,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 270, y = 70,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
-            {t = 300, y = 40,  s = {32,33}, w = 8, h = 8, sw = 1, sh = 1 },
+            -- t = trigger time, tp = type, y = entry coordinate
+            {t=100, tp="a", y=40},
+            {t=100, tp="b", y=49},
+            {t=100, tp="b", y=60},
+            {t=120, tp="a", y=60},
+            {t=130, tp="b", y=50},
+            {t=140, tp="b", y=40},
+            {t=200, tp="a", y=100},
+            {t=200, tp="a", y=20},
+            {t=250, tp="b", y=40},
+            {t=270, tp="b", y=40},
+            {t=270, tp="a", y=70},
+            {t=300, tp="a", y=40},
         },
         e = {
-            a = {
-                t = 40, -- trigger time
-                n = 10, -- number to generate
-                s = {32,33}, -- sprites
-                sw = 1, -- sprite width (in tiles)
-                sh = 1, -- sprite height (in tiles)
-                l = 10, -- Life (health)
-                w = 8, -- width
-                h = 8, -- height
-                lt = 75, -- lifetime (how long to exist)
-                x = 0, -- absolute x position
-                y = 0, -- absolute y position
-
-                pv = 100, -- value in points (for scoring)
-
+            {
+                -- t = trigger time, tp = type, n = number to generate, lt = lifetime (how long to exist)
+                t = 20, tp = "a", n = 10, lt = 75,
                 psx = 0, -- path start position relative to tx
                 psy = 0, -- path start position relative to top of level
                 pex = 128, -- path end position relative to tx
@@ -203,77 +129,18 @@ levels = {
                 p2x = 128, -- path bezier point 1 relative to tx
                 p2y = 0, -- path bezier point 1 relative top of level
             },
-            b = {
-                t = 250,
-                n = 5,
-                s = {34,35},
-                sw = 1,
-                sh = 1,
-                l = 10,
-                w = 8,
-                h = 8,
-                lt = 100,
-                x = 0,
-                y = 0,
-
-                pv = 150,
-
-                psx = 0,
-                psy = 128,
-                pex = 0,
-                pey = 0,
-                p1x = 128,
-                p1y = 0,
-                p2x = 128,
-                p2y = 128,
+            {
+                t = 40, tp = "a", n = 5, lt = 100,
+                psx = 0, psy = 128,  pex = 0,  pey = 0, p1x = 128, p1y = 0, p2x = 128, p2y = 128,
             },
-            c = {
-                t = 512,
-                n = 10,
-                s = {32,33},
-                sw = 1,
-                sh = 1,
-                l = 10,
-                w = 8,
-                h = 8,
-                lt = 75,
-                x = 0,
-                y = 0,
-
-                pv = 100,
-
-                psx = 0,
-                psy = 0,
-                pex = 128,
-                pey = 128,
-                p1x = 0,
-                p1y = 128,
-                p2x = 128,
-                p2y = 0,
+            {
+                t = 80, tp = "a", n = 5, lt = 100,
+                psx = 0, psy = 128,  pex = 0,  pey = 0, p1x = 128, p1y = 0, p2x = 128, p2y = 128,
             },
-            d = {
-                t = 768,
-                n = 5,
-                s = {34,35},
-                sw = 1,
-                sh = 1,
-                l = 10,
-                w = 8,
-                h = 8,
-                lt = 100,
-                x = 0,
-                y = 0,
-                pv = 150,
-
-                psx = 0,
-                psy = 128,
-                pex = 0,
-                pey = 0,
-                p1x = 128,
-                p1y = 0,
-                p2x = 128,
-                p2y = 128,
-            }
+            {
+                t = 120, tp = "a", n = 5, lt = 100,
+                psx = 0, psy = 128,  pex = 0,  pey = 0, p1x = 128, p1y = 0, p2x = 128, p2y = 128,
+            },
         }
     },
 }
@@ -281,17 +148,16 @@ levels = {
 -- ===========
 -- Controllers
 -- ===========
-
 #include controllers/enemies.p8
 #include controllers/ship.p8
 #include controllers/tiles.p8
 #include controllers/shots.p8
 #include controllers/explosions.p8
+#include controllers/player.p8
 
 -- ===========
 -- Scenes
 -- ===========
-
 #include scenes/title.p8
 #include scenes/help.p8
 #include scenes/shipselect.p8
@@ -428,6 +294,7 @@ end
 function _init()
     printh('_init')
     switchScene("title")
+    c_player._init()
     c_ship._init()
     c_shots._init()
     c_tiles._init()
@@ -452,22 +319,22 @@ __gfx__
 00000000000990000090090090000009800000082000000200000000009009000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000009900009000090080000800200002000000000000000000900009000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000999900008888000022220000000000000000000000000090000009000000000000000000000000000000000000000000000000
-000ee000000ff000000bb00000033000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00eeee0000ffff0000bbbb0000333300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0eeeeee00ffffff00bbbbbb003333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-eeeeeeeeffffffffbbbbbbbb33333333000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-eeeeeeeeffffffffbbbbbbbb33333333000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0eeeeee00ffffff00bbbbbb003333330000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00eeee0000ffff0000bbbb0000333300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000ee000000ff000000bb00000033000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000ee000000ff000000ee00000077000000ee000000ff000000bb00000033000000ee00000088000000bb00000033000000ee000000ff000000bb00000033000
+00eeee0000eeee0000eeee000077770000eeee0000ffff0000bbbb000033330000eeee000088880000bbbb000033330000eeee0000ffff0000bbbb0000333300
+0eeeeee00eeeeee00eeeeee0077777700eeeeee00ffffff00bbbbbb0033333300eeeeee0088888800bbbbbb0033333300eeeeee00ffffff00bbbbbb003333330
+eeeeeeeefeeeeeefeeeeeeee77777777eeeeeeeeffffffffbbbbbbbb33333333eeeeeeee88888888bbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb33333333
+eeeeeeeefeeeeeefeeeeeeee77777777eeeeeeeeffffffffbbbbbbbb33333333eeeeeeee88888888bbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb33333333
+0eeeeee00eeeeee00eeeeee0077777700eeeeee00ffffff00bbbbbb0033333300eeeeee0088888800bbbbbb0033333300eeeeee00ffffff00bbbbbb003333330
+00eeee0000eeee0000eeee000077770000eeee0000ffff0000bbbb000033330000eeee000088880000bbbb000033330000eeee0000ffff0000bbbb0000333300
+000ee000000ff000000ee00000077000000ee000000ff000000bb00000033000000ee00000088000000bb00000033000000ee000000ff000000bb00000033000
+00088000000ee000000ff000000bb00000033000000ee000000ff000000bb00000033000000ee000000ff000000bb00000033000000ee000000ff000000bb000
+0088880000eeee0000ffff0000bbbb000033330000eeee0000ffff0000bbbb000033330000eeee0000ffff0000bbbb000033330000eeee0000ffff0000bbbb00
+088888800eeeeee00ffffff00bbbbbb0033333300eeeeee00ffffff00bbbbbb0033333300eeeeee00ffffff00bbbbbb0033333300eeeeee00ffffff00bbbbbb0
+88888888eeeeeeeeffffffffbbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb
+88888888eeeeeeeeffffffffbbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb33333333eeeeeeeeffffffffbbbbbbbb
+088888800eeeeee00ffffff00bbbbbb0033333300eeeeee00ffffff00bbbbbb0033333300eeeeee00ffffff00bbbbbb0033333300eeeeee00ffffff00bbbbbb0
+0088880000eeee0000ffff0000bbbb000033330000eeee0000ffff0000bbbb000033330000eeee0000ffff0000bbbb000033330000eeee0000ffff0000bbbb00
+00088000000ee000000ff000000bb00000033000000ee000000ff000000bb00000033000000ee000000ff000000bb00000033000000ee000000ff000000bb000
 66666666666666660000005555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 66666666666666660055555665555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 66666666666666665556666666555555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

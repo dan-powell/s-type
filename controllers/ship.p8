@@ -1,12 +1,11 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-
 c_ship = {}
 c_ship.ship = {}
 c_ship.trails = {}
 c_ship.current = 1
-c_ship.config = {
+c_ship.conf = {
     s = 1,
     t = 1, -- type 1 = main, 2 = space
     w = 8, -- width
@@ -20,6 +19,35 @@ c_ship.config = {
     dx = -1, -- direction (+1 right -1 left)
     dy = -1, -- direction (+1 down -1 up)
 }
+c_ship.ships = {
+    {
+        n = "zander",
+        d = "all rounder",
+        l = 5,
+        fx = 0.7, -- horizontal friction
+        fy = 0.7, -- vertical friction
+        f = 2, -- force applied when moved
+        sp = {1,2,3} -- sprites
+    },
+    {
+        n = "henkler",
+        d = "slow and solid",
+        l = 10,
+        fx = 0.5, -- horizontal friction
+        fy = 0.5, -- vertical friction
+        f = 1.5, -- force applied when moved
+        sp = {4,5,6} -- sprites
+    },
+    {
+        n = "zweiss",
+        d = "speedy yet delicate",
+        l = 3,
+        fx = 0.7, -- horizontal friction
+        fy = 0.7, -- vertical friction
+        f = 2.5, -- force applied when moved
+        sp = {7,8,9} -- sprites
+    }
+}
 
 c_ship._init = function()
     c_ship.select(1)
@@ -31,39 +59,42 @@ c_ship._update = function()
         collision_tile(c_ship.ship.x + c_ship.ship.w, c_ship.ship.y, s_game.level) or
         collision_tile(c_ship.ship.x, c_ship.ship.y + c_ship.ship.h, s_game.level) or
         collision_tile(c_ship.ship.x + c_ship.ship.w, c_ship.ship.y + c_ship.ship.h, s_game.level) then
-        player.score -= 99
         s_game.add_explosion(c_ship.ship.x, c_ship.ship.y, 2)
         c_ship.hide()
         s_game.reset()
     end
 end
 
+-- Select a new ship
 c_ship.select = function(s)
     c_ship.current = s
     c_ship.ship = c_ship.new()
 end
 
+-- generate ship object
 c_ship.new = function()
     local s = {}
-    for k,v in pairs(c_ship.config) do
+    for k,v in pairs(c_ship.conf) do
         s[k] = v
     end
-    for k,v in pairs(config.ships[c_ship.current]) do
+    for k,v in pairs(c_ship.ships[c_ship.current]) do
         s[k] = v
     end
     return s
 end
+
+-- -----------
+-- Ship Positioning & Movement
+-- -----------
 
 -- Move ship to coordinates relative to camera position
 c_ship.move_to = function(x, y)
     c_ship.ship.x = cam.rel_x(x)
     c_ship.ship.y = cam.rel_y(y)
 end
-
 c_ship.move_to_x = function(x)
     c_ship.ship.x = cam.rel_x(x)
 end
-
 c_ship.move_to_y = function(y)
     c_ship.ship.y = cam.rel_y(y)
 end
@@ -73,16 +104,41 @@ c_ship.move_to_c = function(x, y)
     c_ship.ship.x = cam.rel_cx(x)
     c_ship.ship.y = cam.rel_cy(y)
 end
-
 c_ship.move_to_cx = function(x)
     c_ship.ship.x = cam.rel_cx(x)
 end
-
 c_ship.move_to_cy = function(y)
     c_ship.ship.y = cam.rel_cy(y)
 end
 
+-- Move ship by x
+c_ship.move_x = function(x)
+    c_ship.ship.x += x
+    c_ship.add_trails()
+end
+c_ship.move_y = function(y)
+    c_ship.ship.y += y
+    c_ship.add_trails()
+end
 
+-- Move ship in a direction
+c_ship.move_d = function(d)
+    local s = c_ship.get()
+
+    -- create a force acting on the ship
+    if d == 'l' then s.vx -= s.f end
+    if d == 'r' then s.vx += s.f end
+    if d == 'u' then s.vy -= s.f end
+    if d == 'd' then s.vy += s.f end
+
+    -- Add some nce trails
+    c_ship.add_trails()
+end
+
+c_ship.add_trails = function()
+    c_ship.add_trail(c_ship.ship.x, c_ship.ship.y + 1)
+    c_ship.add_trail(c_ship.ship.x, c_ship.ship.y + c_ship.ship.h - 2)
+end
 
 c_ship.reset = function()
     c_ship.ship = c_ship.new()
@@ -93,29 +149,10 @@ c_ship.get = function()
 end
 
 c_ship.hide = function()
-    c_ship.ship.s = 0
+    c_ship.ship.sp = {0}
 end
 
-c_ship.move_x = function(x)
-    c_ship.ship.x += x
-end
 
-c_ship.move_y = function(y)
-    c_ship.ship.y += y
-end
-
-c_ship.move = function(d)
-    local s = c_ship.get()
-
-    -- create a force acting on the ship
-    if d == 'l' then s.vx -= s.f end
-    if d == 'r' then s.vx += s.f end
-    if d == 'u' then s.vy -= s.f end
-    if d == 'd' then s.vy += s.f end
-
-    c_ship.add_trail(s.x, s.y + 1)
-    c_ship.add_trail(s.x, s.y + s.h - 2)
-end
 
 c_ship.update_position = function()
 

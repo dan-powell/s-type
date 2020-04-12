@@ -2,6 +2,9 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 c_shots = {}
+c_shots.conf = {
+    vx = 4
+}
 c_shots._init = function()
     c_shots.actors = {}
 end
@@ -12,9 +15,10 @@ end
 
 c_shots.new = function(x, y)
     local s = {}
-    s.vx = config.shot.vx
+    s.vx = c_shots.conf.vx
     s.x = x
     s.y = y
+    s.d = 3.5 -- damage per shot
     add(c_shots.actors, s)
 end
 
@@ -22,12 +26,16 @@ c_shots._update = function()
     foreach(c_shots.actors, c_shots.move)
     if(not debounce) debounce=0
     debounce += 1
-    if btn(5) and debounce > 10 then
+    if btn(5) and debounce > 5 then
         local s = c_ship.get()
         c_shots.new(s.x + 3, s.y)
         c_shots.new(s.x + 3, s.y + s.h - 1)
         debounce = 0
     end
+end
+
+c_shots.delete = function(s)
+    del(c_shots.actors, s)
 end
 
 c_shots.move = function(s)
