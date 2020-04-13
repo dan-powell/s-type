@@ -1,4 +1,4 @@
-pico-8 cartridge // http://www.pico-8.com
+pico-8 cartridge -- http:--www.pico-8.com
 version 18
 __lua__
 
@@ -30,12 +30,16 @@ timer.timers = {}
 timer.new = function(n)
     timer.timers[n] = {
         v = 0,
-        s = 1
+        s = 1,
+        p = false
     }
 end
 timer._update = function()
     for k,v in pairs(timer.timers) do
-        v.v += v.s
+        -- check if paused
+        if (not v.p) then
+            v.v += v.s
+        end
     end
 end
 timer.get = function(n)
@@ -43,6 +47,31 @@ timer.get = function(n)
         timer.new(n)
     end
     return timer.timers[n].v
+end
+timer.pause = function(n)
+    if (timer.timers[n]) then
+        timer.timers[n].p = true
+    else
+        printh('pause timer error - not found')
+    end
+end
+timer.resume = function(n)
+    if (timer.timers[n]) then
+        timer.timers[n].p = false
+    else
+        printh('resume timer error - not found')
+    end
+end
+timer.toggle = function(n)
+    if (timer.timers[n]) then
+        if timer.timers[n].p == false then
+            timer.timers[n].p = true
+        else
+            timer.timers[n].p = false
+        end
+    else
+        printh('toggle timer error - not found')
+    end
 end
 timer.reset = function(n)
     timer.new(n)
@@ -258,12 +287,20 @@ function bezier_quad(l,o,s,e,p1,p2)
 end
 
 
-function up_down(l,s,e)
-    local t = frame%l
-    t = t/l*100
-    t = t/100
+function up_down(t,l,s,e)
+
+    -- math
+    local ct = t%l
+    local ct2 = (ct/l*200)/100
+    local ct3 = ct2 % 1
+    local ct4 = abs(ct2 - ct3 * 2)
+
+    -- distance
     local d = e - s
-    return easeInOutCubic(t) * d + s
+
+    --easing
+    return easeInOutQuad(ct4) * d + s
+
 end
 
 function easeInOutCubic(t)
@@ -273,6 +310,82 @@ function easeInOutCubic(t)
         return (t-1)*(2*t-2)*(2*t-2)+1
     end
 end
+
+function easeInQuad(t)
+    return t*t
+end
+
+-- accelerating from zero velocity
+function easeOutQuad(t)
+    return t*(2-t)
+end
+
+-- acceleration until halfway, then deceleration
+function easeInOutQuad(t)
+    if t<.5 then
+        return 2*t*t
+    else
+        return -1+(4-2*t)*t
+    end
+end
+
+-- accelerating from zero velocity
+function easeInCubic(t)
+    return t*t*t
+end
+
+-- decelerating to zero velocity
+function easeOutCubic(t)
+    return (1-t-t)*t*t+1
+end
+
+-- acceleration until halfway, then deceleration
+function easeInOutCubic(t)
+    if t<.5 then
+        return 4*t*t*t
+    else
+        return (t-1)*(2*t-2)*(2*t-2)+1
+    end
+end
+
+-- accelerating from zero velocity
+function easeInQuart(t)
+    return t*t*t*t
+end
+
+-- decelerating to zero velocity
+function easeOutQuart(t)
+    return 1-(1-t-t)*t*t*t
+end
+
+-- acceleration until halfway, then deceleration
+function easeInOutQuart(t)
+    if t<.5 then
+        return 8*t*t*t*t
+    else
+        return 1-8*(1-t-t)*t*t*t
+    end
+end
+
+-- accelerating from zero velocity
+function easeInQuint(t)
+    return t*t*t*t*t
+end
+
+-- decelerating to zero velocity
+function easeOutQuint(t)
+    return 1+(1-t-t)*t*t*t*t
+end
+
+-- acceleration until halfway, then deceleration
+function easeInOutQuint(t)
+    if t<.5 then
+        return 16*t*t*t*t*t
+    else
+        return 1+16*(1-t-t)*t*t*t*t
+    end
+end
+
 
 -- ===========
 -- scene management

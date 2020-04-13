@@ -24,12 +24,14 @@ end
 
 c_boss._update = function()
 
-    if(timer.get('up') <= 100) then
-        c_boss.actor.y = up_down(100, 30, 80)
-    elseif (timer.get('up') <= 200) then
-        c_boss.actor.y = up_down(100, 80, 30)
-    else
-        timer.reset('up')
+
+
+    c_boss.actor.y = up_down(timer.get('boss_y'), 100, 10, 90)
+
+    c_boss.actor.x = up_down(timer.get('boss_x'), 80, 10, 90)
+
+    if btnp(4) then
+        timer.toggle('boss_y')
     end
 
 
