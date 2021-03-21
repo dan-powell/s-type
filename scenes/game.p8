@@ -1,6 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
+
 s_game = {}
 -- ===========
 -- core
@@ -20,7 +21,7 @@ s_game._update = function()
     s_game.create_star(0)
 
     if s_game.state == 0 then
-        -- intro
+        -- level intro
         if(timer.get('intro') < 50) then
             c_ship.move_x(1)
         else
@@ -31,7 +32,7 @@ s_game._update = function()
     end
 
     if s_game.state == 1 then
-        -- regular play
+        -- level play
         s_game.timeline_speed = 1
         s_game.move_ship()
         c_ship._update()
@@ -47,7 +48,7 @@ s_game._update = function()
     end
 
     if s_game.state == 2 then
-        -- death
+        -- player death
         if(timer.get('outro') < 50) then
 
         else
@@ -59,12 +60,38 @@ s_game._update = function()
     end
 
     if s_game.state == 3 then
-        -- boss
+        -- boss intro
+        s_game.move_ship()
+        c_ship._update()
+        c_boss._update(3)
+        if(timer.get('bossintro') < 50) then
+
+        else
+            s_game.reset()
+            timer.remove('bossintro')
+            s_game.state = 4
+        end
+    end
+
+    if s_game.state == 4 then
+        -- boss play
         s_game.move_ship()
         c_ship._update()
         c_shots._update()
         c_boss._update()
+    end
 
+    if s_game.state == 5 then
+        -- boss outro
+        s_game.move_ship()
+        c_ship._update()
+        if(timer.get('bossoutro') < 50) then
+
+        else
+            timer.remove('bossoutro')
+            switchScene("end", c_player)
+        end
+        c_boss._update(3)
     end
 
 end
@@ -73,39 +100,46 @@ s_game._draw = function()
     cls(1)
     map(s_game.level.mx,s_game.level.my,0,0,s_game.level.tw,s_game.level.th)
     if debug then
+        print('t: ' .. c_ship.ship.x, 80, 113, 7) -- debug timeline
         print('t: ' .. s_game.timeline, 80, 121, 7) -- debug timeline
         print('mem: ' .. stat(0), 2, 113, 7) -- debug memory
         print('cpu: ' .. stat(1), 2, 121, 7) -- debug cpu
     end
     foreach(s_game.starfield, s_game.draw_starfield)
 
-    if  s_game.state == 0 or
-        s_game.state == 1 or
-        s_game.state == 2
-    then
-        c_tiles._draw()
-        c_enemies._draw()
-        c_ship._draw()
-        c_explosions._draw()
-        c_shots._draw()
-        s_game.draw_ui()
-    end
+    c_tiles._draw()
+    c_enemies._draw()
+    c_ship._draw()
+    c_explosions._draw()
+    c_shots._draw()
+    s_game.draw_ui()
 
     if s_game.state == 0 then
+        -- level intro
         print('stand by', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
     end
 
     if s_game.state == 2 then
-        print('destruction', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
+        -- player death
+        print('wasted', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
     end
 
     if s_game.state == 3 then
-        c_ship._draw()
-        c_explosions._draw()
-        c_boss._draw()
-        c_shots._draw()
-        s_game.draw_ui()
+        -- boss intro text
+        print('warning', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
     end
+
+    if s_game.state == 4 then
+        -- draw boss play
+        c_boss._draw()
+    end
+
+    if s_game.state == 5 then
+        -- boss outro
+        c_explosions._draw()
+        print('victory', cam.x + flr(cam.w/2) - 24, cam.y + flr(cam.h/2) + 30, 9)
+    end
+    
 
 end
 -- ===========

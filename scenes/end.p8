@@ -5,7 +5,10 @@ s_end = {}
 -- ===========
 -- core
 -- ===========
-s_end._init = function(player)
+s_end._init = function()
+    s_end.player = player
+end
+s_end._focus = function(player)
     s_end.player = player
 end
 s_end._update = function()

@@ -1,5 +1,5 @@
-pico-8 cartridge -- http:--www.pico-8.com
-version 18
+pico-8 cartridge // http://www.pico-8.com
+version 32
 __lua__
 
 -- S-Type - an game by Matt and Dan
@@ -27,7 +27,7 @@ grid.h = 8
 
 timer = {}
 timer.timers = {}
-timer.new = function(n)
+timer.new = function(n) 
     timer.timers[n] = {
         v = 0,
         s = 1,
@@ -178,6 +178,14 @@ levels = {
 }
 
 -- ===========
+-- Helpers
+-- ===========
+#include helpers/general.p8
+#include helpers/collision.p8
+#include helpers/curves.p8
+#include helpers/transitions.p8
+
+-- ===========
 -- Controllers
 -- ===========
 #include controllers/enemies.p8
@@ -197,195 +205,6 @@ levels = {
 #include scenes/game.p8
 #include scenes/end.p8
 #include scenes/levelselect.p8
-
--- ===========
--- Global Helpers
--- ===========
-
--- Get the length of a table
-function tablelength(t)
-    local count = 0
-    for _ in pairs(t) do count = count + 1 end
-    return count
-end
-
--- Detect collision with a collidable tile
-function collision_tile(x, y, level)
-    t=tget(x, y, level)
-    -- test if tile has flag
-    if fget(t, 0) then
-        return true
-    else
-        return false
-    end
-end
-
--- Detects collisions between objects
-function collision(o1, o2)
-    if
-        o2.x+o2.w > o1.x and
-        o2.y+o2.h > o1.y and
-        o2.x < o1.x+o1.w and
-        o2.y < o1.y+o1.h
-    then
-        return true
-    end
-end
-
--- Detects collisions between objects using hitboxes
-function collision_hitbox(o1, o2)
-    if
-        o2.x+o2.hbx+o2.hbw > o1.x+o1.hbx and
-        o2.y+o2.hby+o2.hbh > o1.y+o1.hby and
-        o2.x+o2.hbx < o1.x+o1.hbx+o1.hbw and
-        o2.y+o2.hby < o1.y+o1.hby+o1.hbh
-    then
-        return true
-    end
-end
-
--- return the tile at a given pixel position
-function tget(x, y, level)
-    x += (level.mx * 8)
-    y += (level.my * 8)
-    return mget(flr(x/grid.w), flr(y/grid.h))
-end
-
--- set the tile at a given pixel position
-function tset(x, y, v, level)
-    x += (level.mx * 8)
-    y += (level.my * 8)
-    return mset(flr(x/grid.w), flr(y/grid.h), v)
-end
-
--- Calculate a bezier curve
--- Should be called once for X, and again for Y
--- l: length of time (frames)
--- s: Start value
--- e: End value
--- p1: Bezier point 1
-function bezier(l,s,e,p1)
-    local t = frame%l
-    t = t/l*100
-    t = t/100
-    return (1-t)*((1-t)*s + t*p1) + t*((1-t)*p1 + t*e)
-end
-
--- Calculate a quadratic bezier curve
--- Should be called once for X, and again for Y
--- l: length of time (frames)
--- o: offset
--- s: Start value
--- e: End value
--- p1: Bezier point 1
--- p2: Bezier point 2
-function bezier_quad(l,o,s,e,p1,p2)
-    local t = (frame-o)%l
-    t = t/l*100
-    t = t/100
-    return (1-t)*(1-t)*(1-t)*s + 3*(1-t)*(1-t)*t*p1 + 3*(1-t)*t*t*p2 + t*t*t*e
-end
-
-
-function up_down(t,l,s,e)
-
-    -- math
-    local ct = t%l
-    local ct2 = (ct/l*200)/100
-    local ct3 = ct2 % 1
-    local ct4 = abs(ct2 - ct3 * 2)
-
-    -- distance
-    local d = e - s
-
-    --easing
-    return easeInOutQuad(ct4) * d + s
-
-end
-
-function easeInOutCubic(t)
-    if t<.5 then
-        return 4*t*t*t
-    else
-        return (t-1)*(2*t-2)*(2*t-2)+1
-    end
-end
-
-function easeInQuad(t)
-    return t*t
-end
-
--- accelerating from zero velocity
-function easeOutQuad(t)
-    return t*(2-t)
-end
-
--- acceleration until halfway, then deceleration
-function easeInOutQuad(t)
-    if t<.5 then
-        return 2*t*t
-    else
-        return -1+(4-2*t)*t
-    end
-end
-
--- accelerating from zero velocity
-function easeInCubic(t)
-    return t*t*t
-end
-
--- decelerating to zero velocity
-function easeOutCubic(t)
-    return (1-t-t)*t*t+1
-end
-
--- acceleration until halfway, then deceleration
-function easeInOutCubic(t)
-    if t<.5 then
-        return 4*t*t*t
-    else
-        return (t-1)*(2*t-2)*(2*t-2)+1
-    end
-end
-
--- accelerating from zero velocity
-function easeInQuart(t)
-    return t*t*t*t
-end
-
--- decelerating to zero velocity
-function easeOutQuart(t)
-    return 1-(1-t-t)*t*t*t
-end
-
--- acceleration until halfway, then deceleration
-function easeInOutQuart(t)
-    if t<.5 then
-        return 8*t*t*t*t
-    else
-        return 1-8*(1-t-t)*t*t*t
-    end
-end
-
--- accelerating from zero velocity
-function easeInQuint(t)
-    return t*t*t*t*t
-end
-
--- decelerating to zero velocity
-function easeOutQuint(t)
-    return 1+(1-t-t)*t*t*t*t
-end
-
--- acceleration until halfway, then deceleration
-function easeInOutQuint(t)
-    if t<.5 then
-        return 16*t*t*t*t*t
-    else
-        return 1+16*(1-t-t)*t*t*t*t
-    end
-end
-
 
 -- ===========
 -- scene management
@@ -553,10 +372,12 @@ __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000004243424342434243424342434243424342434243424342430000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-00100000000000000013700177001a7001d70020700237002670028700297002a7002a700297002770024700207001c700147000e7000b7000b7000d700117001670000000000000000000000000000000000000
-00100000000002c700297002870023700207001f7001e7002f7001f7001e7001d7001b7001d70015700217002170016700167001670016700167001670018700187001b7001d7001c7001c700000000000000000
+00100000196402265028660216601b67018670106700e6700b660086500365000640006300c63000630096200962007620056100560002600026000d700117001670031700000000000000000000000000000000
+001000003475018700007002870023700207001f7001e7002f7001f7001e7001d7001b7001d70015700217002170016700167001670016700167001670018700187001b7001d7001c7001c700000000000000000
+001000001c64006630036100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __music__
 01 00414344
 00 01424344
 02 01020304
 02 01024344
+

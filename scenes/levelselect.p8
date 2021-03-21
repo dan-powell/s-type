@@ -20,7 +20,7 @@ s_lselect._update = function()
     end
 end
 s_lselect._draw = function()
-    cls(0)
+    cls(1)
     print("level select", 48, 32, 7)
     print(select, 48, 48, 7)
 end

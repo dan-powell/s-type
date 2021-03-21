@@ -7,11 +7,14 @@ s_title = {}
 -- ===========
 s_title._focus = function()
 
+    s_title.state = 0
+
     -- reset lvl select input table
     s_title.lvlselect_input = {-1,-1,-1,-1,-1,-1}
 
-    -- reset the starfield
+    -- reset some tables
     s_title.starfield = {}
+    s_title.lines = {}
 
     -- prepopulate starfield
     for i=1,60 do
@@ -40,35 +43,50 @@ s_title._focus = function()
 end
 s_title._update = function()
 
-    -- record keypresses for lvl select
-    if btnp(0) then
-        del(s_title.lvlselect_input, s_title.lvlselect_input[1])
-        add(s_title.lvlselect_input, 0)
-    end
-    if btnp(1) then
-        del(s_title.lvlselect_input, s_title.lvlselect_input[1])
-        add(s_title.lvlselect_input, 1)
-    end
+    if s_title.state == 0 then
 
-    -- test for correct lselect input pattern
-    local test_for_lselect = true
-    for k, v in pairs(s_title.lvlselect_input) do
-        if v != lvlselect[k] then
-            test_for_lselect = false
+        -- record keypresses for lvl select
+        if btnp(0) then
+            del(s_title.lvlselect_input, s_title.lvlselect_input[1])
+            add(s_title.lvlselect_input, 0)
         end
-    end
-    if test_for_lselect then
-        switchScene("levelselect")
+        if btnp(1) then
+            del(s_title.lvlselect_input, s_title.lvlselect_input[1])
+            add(s_title.lvlselect_input, 1)
+        end
+
+        -- test for correct lselect input pattern
+        local test_for_lselect = true
+        for k, v in pairs(s_title.lvlselect_input) do
+            if v != lvlselect[k] then
+                test_for_lselect = false
+            end
+        end
+        if test_for_lselect then
+            switchScene("levelselect")
+        end
+
+        -- start the game
+        if btnp(5) then
+            s_title.t = transition_fizzle(1);
+            s_title.state = 1
+        end
+
+        -- show the help screen
+        if btnp(4) then
+            switchScene("help")
+        end
+
     end
 
-    -- start the game
-    if btnp(5) then
-        switchScene("shipselect")
-    end
+    if s_title.state == 1 then
+        if(timer.get("outro") < 40) then
 
-    -- show the help screen
-    if btnp(4) then
-        switchScene("help")
+            -- fade_scr(timer.get("outro")/50)
+        else
+            timer.remove("outro")
+            switchScene("shipselect")
+        end
     end
 
     -- create new star
@@ -85,29 +103,39 @@ s_title._update = function()
     end
 end
 s_title._draw = function()
-    cls(0)
-    foreach(s_title.starfield, s_title.draw_starfield)
-    spr(s_title.s.s, s_title.s.x, s_title.s.y, s_title.s.w, s_title.s.h)
-    spr(s_title.type.s, s_title.type.x, s_title.type.y, s_title.type.w, s_title.type.h)
+    if s_title.state == 0 then
+        cls(0)
+        foreach(s_title.starfield, s_title.draw_starfield)
+        spr(s_title.s.s, s_title.s.x, s_title.s.y, s_title.s.w, s_title.s.h)
+        spr(s_title.type.s, s_title.type.x, s_title.type.y, s_title.type.w, s_title.type.h)
 
-    if s_title.type.x == s_title.type.xd and flash2 == nil then
-        flash2 = true
-        cls(7)
+        if s_title.type.x == s_title.type.xd and flash2 == nil then
+            flash2 = true
+            cls(7)
+        end
+
+        if(not flash) flash=0
+        if(frame%(30/2)==0) then
+            flash += 1
+        end
+        local c
+        if flash%2 == 1 then
+            c = 9
+        else
+            c = 8
+        end
+        print("❎ to start", 42, 64, c)
+        print("🅾️ for help", 80, 120, 5)
+        print(version, 3, 120, 2)
+    end
+    
+    if s_title.t then
+        for i=0,510 do
+            s_title.t.draw()
+            s_title.t.step()
+        end
     end
 
-    if(not flash) flash=0
-    if(frame%(30/2)==0) then
-        flash += 1
-    end
-    local c
-    if flash%2 == 1 then
-        c = 9
-    else
-        c = 8
-    end
-    print("❎ to start", 42, 64, c)
-    print("🅾️ for help", 80, 120, 5)
-    print(version, 3, 120, 2)
 end
 -- ===========
 -- private methods
@@ -129,4 +157,5 @@ s_title.draw_starfield = function(s)
         del(s_title.starfield, s)
     end
 end
+
 scenes["title"] = s_title

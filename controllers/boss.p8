@@ -24,16 +24,12 @@ end
 
 c_boss._update = function()
 
-
-
-    c_boss.actor.y = up_down(timer.get('boss_y'), 100, 10, 90)
-
-    c_boss.actor.x = up_down(timer.get('boss_x'), 80, 10, 90)
+    c_boss.actor.x = up_down(timer.get('boss_x'), 200, 0, 128 - c_boss.actor.w)
+    c_boss.actor.y = up_down(timer.get('boss_y'), 200, 0, 128 - c_boss.actor.h)
 
     if btnp(4) then
         timer.toggle('boss_y')
     end
-
 
     -- damage sprite timer
     if c_boss.actor.s_d > 0 then
@@ -75,8 +71,7 @@ c_boss.damage = function(d)
 end
 
 c_boss.destroy = function()
-    c_explosions.new(t.x, t.y, 2)
-    s_game.state = 4
+    s_game.state = 5
 end
 
 c_boss._draw = function()

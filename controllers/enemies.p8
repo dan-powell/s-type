@@ -45,6 +45,7 @@ c_enemies._update = function()
         -- Check if enemy has collided with ship
         local s = c_ship.get()
         if collision(s, e) then
+            sfx(0);
             c_explosions.new(s.x, s.y, 2)
             c_enemies.destroy(e)
             c_player.lives_lose()
@@ -115,6 +116,7 @@ c_enemies.damage = function(e, d)
 end
 
 c_enemies.destroy = function(e)
+    sfx(2);
     c_player.score_add(e.pv)
     c_explosions.new(e.x, e.y, 1)
     del(c_enemies.actors, e)

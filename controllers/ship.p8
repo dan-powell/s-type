@@ -69,6 +69,7 @@ end
 c_ship.select = function(s)
     c_ship.current = s
     c_ship.ship = c_ship.new()
+    return c_ship.ship
 end
 
 -- generate ship object
@@ -131,7 +132,7 @@ c_ship.move_d = function(d)
     if d == 'u' then s.vy -= s.f end
     if d == 'd' then s.vy += s.f end
 
-    -- Add some nce trails
+    -- Add some nice trails
     c_ship.add_trails()
 end
 

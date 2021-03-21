@@ -14,6 +14,7 @@ c_shots.reset = function()
 end
 
 c_shots.new = function(x, y)
+    sfx(1);
     local s = {}
     s.vx = c_shots.conf.vx
     s.x = x
