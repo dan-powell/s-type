@@ -15,6 +15,7 @@ s_game._init = function()
 end
 s_game._focus = function()
     s_game.setup()
+    music(-1)
 end
 s_game._update = function()
 

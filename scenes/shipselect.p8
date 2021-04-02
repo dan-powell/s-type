@@ -12,17 +12,20 @@ s_ship._update = function()
     if s_ship.state == 0 then
 
         if btnp(5) then
+            sfx(2)
             s_ship.ship = c_ship.select(s_ship.selected + 1)
             s_ship.state = 1
         end
 
         if btnp(2) then
+            sfx(1)
             s_ship.selected = s_ship.prev_ship()
             printh("up")
             printh(s_ship.selected)
         end
 
         if btnp(3) then
+            sfx(1)
             s_ship.selected = s_ship.next_ship()
             printh("down")
             printh(s_ship.selected)

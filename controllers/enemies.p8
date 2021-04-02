@@ -116,7 +116,7 @@ c_enemies.damage = function(e, d)
 end
 
 c_enemies.destroy = function(e)
-    sfx(2);
+    sfx(flr(rnd(4))+3)
     c_player.score_add(e.pv)
     c_explosions.new(e.x, e.y, 1)
     del(c_enemies.actors, e)

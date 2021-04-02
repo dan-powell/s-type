@@ -7,6 +7,8 @@ s_title = {}
 -- ===========
 s_title._focus = function()
 
+    music(0)
+
     s_title.state = 0
 
     -- reset lvl select input table
@@ -68,7 +70,8 @@ s_title._update = function()
 
         -- start the game
         if btnp(5) then
-            s_title.t = transition_fizzle(1);
+            sfx(2)
+            s_title.t = transition_fizzle(1)
             s_title.state = 1
         end
 
@@ -82,7 +85,6 @@ s_title._update = function()
     if s_title.state == 1 then
         if(timer.get("outro") < 40) then
 
-            -- fade_scr(timer.get("outro")/50)
         else
             timer.remove("outro")
             switchScene("shipselect")
