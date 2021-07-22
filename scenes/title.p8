@@ -77,6 +77,7 @@ s_title._update = function()
 
         -- show the help screen
         if btnp(4) then
+            sfx(2)
             switchScene("help")
         end
 
