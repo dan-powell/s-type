@@ -24,7 +24,7 @@ grid.w = 8
 grid.h = 8
 
 
-
+-- timer
 timer = {}
 timer.timers = {}
 timer.new = function(n) 
@@ -81,6 +81,72 @@ timer.remove = function(n)
         timer.timers[n] = nil
     else
         printh('remove timer error - not found')
+    end
+end
+
+-- count down timer
+countdowntimer = {}
+countdowntimer.timers = {}
+countdowntimer.new = function(n, t) 
+    countdowntimer.timers[n] = {
+        v = t,
+        ov = t,
+        s = 1,
+        p = false
+    }
+end
+countdowntimer._update = function()
+    for k,v in pairs(countdowntimer.timers) do
+        -- check if paused
+        if (not v.p) then
+            v.v -= v.s
+        end
+    end
+end
+countdowntimer.get = function(n)
+    if (not countdowntimer.timers[n]) then
+        printh('get countdowntimer error - not found')
+    else
+        return countdowntimer.timers[n].v
+    end
+end
+countdowntimer.pause = function(n)
+    if (countdowntimer.timers[n]) then
+        countdowntimer.timers[n].p = true
+    else
+        printh('pause countdowntimer error - not found')
+    end
+end
+countdowntimer.resume = function(n)
+    if (countdowntimer.timers[n]) then
+        countdowntimer.timer[n].p = false
+    else
+        printh('resume countdowntimer error - not found')
+    end
+end
+countdowntimer.toggle = function(n)
+    if (countdowntimer.timers[n]) then
+        if countdowntimer.timers[n].p == false then
+            countdowntimer.timers[n].p = true
+        else
+            countdowntimer.timers[n].p = false
+        end
+    else
+        printh('toggle countdowntimer error - not found')
+    end
+end
+countdowntimer.reset = function(n, t)
+    if (not timer.timers[n]) then
+        printh('pause countdowntimer error - not found')
+    else
+        countdowntimer.new(n, timer.timers[n].ov) 
+    end
+end
+countdowntimer.remove = function(n)
+    if (countdowntimer.timers[n]) then
+        countdowntimer.timers[n] = nil
+    else
+        printh('remove countdowntimer error - not found')
     end
 end
 
@@ -192,6 +258,7 @@ levels = {
 #include controllers/ship.p8
 #include controllers/tiles.p8
 #include controllers/shots.p8
+#include controllers/enemyshots.p8
 #include controllers/explosions.p8
 #include controllers/player.p8
 #include controllers/boss.p8
@@ -213,6 +280,7 @@ levels = {
 function _update()
     tick += 1
     timer._update()
+    countdowntimer._update()
     if (scene_current._update) then scene_current._update() end
 end
 
@@ -251,6 +319,7 @@ function _init()
     c_player._init()
     c_ship._init()
     c_shots._init()
+    c_enemyshots._init()
     c_tiles._init()
     c_explosions._init()
     c_enemies._init()

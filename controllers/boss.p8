@@ -20,11 +20,12 @@ c_boss.types = {
 c_boss._init = function()
     c_boss.reset()
     printh(c_boss.actor.l)
+    countdowntimer.new('boss_shoot', flr(rnd(100))+100)
 end
 
 c_boss._update = function()
 
-    c_boss.actor.x = up_down(timer.get('boss_x'), 200, 0, 128 - c_boss.actor.w)
+    c_boss.actor.x = up_down(timer.get('boss_x'), 100, 0, 128 - c_boss.actor.w)
     c_boss.actor.y = up_down(timer.get('boss_y'), 200, 0, 128 - c_boss.actor.h)
 
     if btnp(4) then
@@ -52,6 +53,15 @@ c_boss._update = function()
         s_game.state = 2
     end
 
+    if countdowntimer.get('boss_shoot') < 1 then
+       c_boss.shoot()
+       countdowntimer.new('boss_shoot', flr(rnd(10)))
+    end
+
+end
+
+c_boss.shoot = function()
+    c_enemyshots.new(c_boss.actor.x, c_boss.actor.y, flr(rnd(8))-4, flr(rnd(8))-4)
 end
 
 c_boss.damage = function(d)

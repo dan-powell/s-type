@@ -64,6 +64,7 @@ s_game._update = function()
         -- boss intro
         s_game.move_ship()
         c_ship._update()
+        c_enemyshots._update()
         c_boss._update(3)
         if(timer.get('bossintro') < 50) then
 
@@ -79,6 +80,7 @@ s_game._update = function()
         s_game.move_ship()
         c_ship._update()
         c_shots._update()
+        c_enemyshots._update()
         c_boss._update()
     end
 
@@ -113,6 +115,7 @@ s_game._draw = function()
     c_ship._draw()
     c_explosions._draw()
     c_shots._draw()
+    c_enemyshots._draw()
     s_game.draw_ui()
 
     if s_game.state == 0 then
@@ -157,6 +160,7 @@ s_game.reset = function()
     c_enemies.reset()
     c_tiles.reset()
     c_shots.reset()
+    c_enemyshots.reset()
     c_ship.reset()
 
     c_ship.move_to_x(-8)
